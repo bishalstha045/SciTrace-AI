@@ -9,7 +9,8 @@ export default function SignIn() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate('/analyzing');
+    localStorage.setItem('isAuthenticated', 'true');
+    navigate('/analysis/new');
   };
 
   return (

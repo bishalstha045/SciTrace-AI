@@ -9,7 +9,7 @@ export default function SignUp() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate('/analyzing'); 
+    navigate('/analyses'); 
   };
 
   return (

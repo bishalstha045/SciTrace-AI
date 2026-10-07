@@ -75,22 +75,22 @@ export default function AuthLayout({ children }) {
         </div>
 
         {/* Left Text Content */}
-        <div className="absolute left-[80px] top-[180px] w-[460px] z-20">
+        <div className="absolute left-[80px] top-[180px] w-[400px] z-20">
           <div className="text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-5">
             AI-POWERED SCIENTIFIC ANALYSIS
           </div>
-          <h1 className="text-[64px] font-serif text-[#0f2a24] leading-[1.05] mb-6 tracking-tight">
+          <h1 className="text-[54px] font-serif text-[#0f2a24] leading-[1.05] mb-6 tracking-tight">
             Turn scientific <br/> literature into <br/> 
             <span className="relative z-10 text-[#0f2a24] inline-block mt-2">
               <span className="absolute -inset-x-2 inset-y-1 bg-[#e0f7ef] rounded-[10px] -z-10"></span>
               clear insights.
             </span>
           </h1>
-          <p className="text-[16px] text-slate-500 leading-relaxed mb-12 max-w-[420px]">
+          <p className="text-[16px] text-slate-500 leading-relaxed mb-12">
             Upload research papers, identify key scientific claims, find supporting or contradicting evidence, and explore connections across the scientific literature.
           </p>
 
-          <div className="space-y-8">
+          <div className="space-y-7">
             <div className="flex gap-5 items-start">
               <div className="bg-[#f1f5f9] w-[52px] h-[52px] rounded-[16px] flex items-center justify-center shrink-0 border border-slate-100">
                 <FileText className="w-6 h-6 text-slate-800" strokeWidth={1.5} />
@@ -100,7 +100,7 @@ export default function AuthLayout({ children }) {
                 <p className="text-slate-500 text-[14px] mt-1.5 max-w-[300px] leading-snug">All findings are linked to original sources with page references.</p>
               </div>
             </div>
-            <div className="flex gap-5 items-start mt-8">
+            <div className="flex gap-5 items-start">
               <div className="bg-[#f1f5f9] w-[52px] h-[52px] rounded-[16px] flex items-center justify-center shrink-0 border border-slate-100">
                 <LogoIcon className="w-6 h-6 text-slate-800" strokeWidth={2} />
               </div>
@@ -109,21 +109,47 @@ export default function AuthLayout({ children }) {
                 <p className="text-slate-500 text-[14px] mt-1.5 max-w-[300px] leading-snug">Discover relationships between research claims using advanced AI.</p>
               </div>
             </div>
+            <div className="flex gap-5 items-start">
+              <div className="bg-[#f1f5f9] w-[52px] h-[52px] rounded-[16px] flex items-center justify-center shrink-0 border border-slate-100">
+                <svg className="w-6 h-6 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div className="pt-1">
+                <h3 className="font-semibold text-slate-900 text-[16px]">Built for researchers</h3>
+                <p className="text-slate-500 text-[14px] mt-1.5 max-w-[300px] leading-snug">A reliable tool for students, researchers, and academic projects.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute top-[680px] left-[0px] w-[600px] flex gap-8 pt-6 border-t border-slate-200/60">
+            <div>
+              <h4 className="font-bold text-[18px] text-slate-800">10,000+</h4>
+              <p className="text-[12px] text-slate-500 mt-0.5">Researchers & Students</p>
+            </div>
+            <div className="w-[1px] h-10 bg-slate-200"></div>
+            <div>
+              <h4 className="font-bold text-[18px] text-slate-800">100,000+</h4>
+              <p className="text-[12px] text-slate-500 mt-0.5">Papers Analyzed</p>
+            </div>
+            <div className="w-[1px] h-10 bg-slate-200"></div>
+            <div>
+              <h4 className="font-bold text-[18px] text-slate-800">500,000+</h4>
+              <p className="text-[12px] text-slate-500 mt-0.5">Scientific Claims Mapped</p>
+            </div>
           </div>
         </div>
 
         {/* SVG Connecting Lines (Perfectly matching the nodes) */}
         <svg className="absolute inset-0 w-full h-full z-10" pointerEvents="none">
            {/* Top card to AI node */}
-           <path d="M 760 190 C 820 190, 800 350, 850 350" fill="none" stroke="#a7f3d0" strokeWidth="1.5" strokeDasharray="5 5" />
+           <path d="M 800 190 C 830 190, 820 350, 850 350" fill="none" stroke="#a7f3d0" strokeWidth="1.5" strokeDasharray="5 5" />
            {/* Middle card to AI node */}
-           <path d="M 720 330 C 800 330, 800 350, 850 350" fill="none" stroke="#fca5a5" strokeWidth="2" />
+           <path d="M 760 330 C 800 330, 820 350, 850 350" fill="none" stroke="#fca5a5" strokeWidth="2" />
            {/* Bottom card to AI node */}
-           <path d="M 760 470 C 820 470, 800 350, 850 350" fill="none" stroke="#a7f3d0" strokeWidth="1.5" strokeDasharray="5 5" />
+           <path d="M 800 470 C 830 470, 820 350, 850 350" fill="none" stroke="#a7f3d0" strokeWidth="1.5" strokeDasharray="5 5" />
            
-           <circle cx="760" cy="190" r="4" fill="#10b981" />
-           <circle cx="720" cy="330" r="4" fill="#ef4444" />
-           <circle cx="760" cy="470" r="4" fill="#10b981" />
+           <circle cx="800" cy="190" r="4" fill="#10b981" />
+           <circle cx="760" cy="330" r="4" fill="#ef4444" />
+           <circle cx="800" cy="470" r="4" fill="#10b981" />
            
            {/* AI Node attachment dot */}
            <circle cx="850" cy="350" r="5" fill="#059669" />
@@ -132,7 +158,7 @@ export default function AuthLayout({ children }) {
         {/* Middle Floating Graphics */}
         
         {/* Paper 1: Climate Change */}
-        <div className="absolute left-[500px] top-[140px] w-[260px] h-[100px] bg-white p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex flex-col justify-center">
+        <div className="absolute left-[540px] top-[140px] w-[260px] h-[100px] bg-white p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex flex-col justify-center">
           <div className="flex items-start gap-4">
             <PdfDocIcon />
             <div className="pt-0.5">
@@ -144,7 +170,7 @@ export default function AuthLayout({ children }) {
         </div>
 
         {/* Paper 2: Ocean Temperature */}
-        <div className="absolute left-[460px] top-[280px] w-[260px] h-[100px] bg-white p-3 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-slate-100 z-20 flex flex-col justify-center">
+        <div className="absolute left-[500px] top-[280px] w-[260px] h-[100px] bg-white p-3 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-slate-100 z-20 flex flex-col justify-center">
           <div className="flex items-start gap-4">
             <PdfDocIcon />
             <div className="pt-0.5">
@@ -156,7 +182,7 @@ export default function AuthLayout({ children }) {
         </div>
 
         {/* Paper 3: Marine Ecosystem */}
-        <div className="absolute left-[500px] top-[420px] w-[260px] h-[100px] bg-white p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex flex-col justify-center">
+        <div className="absolute left-[540px] top-[420px] w-[260px] h-[100px] bg-white p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex flex-col justify-center">
           <div className="flex items-start gap-4">
             <PdfDocIcon />
             <div className="pt-0.5">
