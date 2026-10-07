@@ -1,189 +1,423 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Network, Search, Plus, FileText, CheckCircle2, RotateCw, BrainCircuit, Link2, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, FileText, CheckCircle2, ChevronRight, Plus, RefreshCw, Link as LinkIcon, BookOpen, BrainCircuit, Activity, Info, AlertTriangle, ShieldCheck } from 'lucide-react';
+
+const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="1.5" />
+    <circle cx="5" cy="5" r="1.5" />
+    <circle cx="19" cy="5" r="1.5" />
+    <circle cx="5" cy="19" r="1.5" />
+    <circle cx="19" cy="19" r="1.5" />
+    <line x1="10.5" y1="10.5" x2="6.5" y2="6.5" />
+    <line x1="13.5" y1="10.5" x2="17.5" y2="6.5" />
+    <line x1="10.5" y1="13.5" x2="6.5" y2="17.5" />
+    <line x1="13.5" y1="13.5" x2="17.5" y2="17.5" />
+  </svg>
+);
+
+const StepIcon = ({ active, complete, waiting, icon: Icon, colorClass, bgClass }) => {
+  return (
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${
+      complete ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 
+      active ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.2)]' : 
+      'bg-slate-50 border-slate-200 text-slate-400'
+    }`}>
+      <Icon className="w-5 h-5" strokeWidth={2}/>
+    </div>
+  )
+}
+
+import { useNavigate, useParams } from 'react-router-dom';
+import { mockAnalysisService } from '../services/mockAnalysisService';
+import ProfileMenu from '../components/ProfileMenu';
 
 export default function Analyzing() {
+  const [scale, setScale] = useState(1);
+  const [progress, setProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
   const navigate = useNavigate();
-  const [progress, setProgress] = useState(68);
+  const { analysisId } = useParams();
 
   useEffect(() => {
-    // Simulate progression to Results page
-    const timer = setTimeout(() => {
-      navigate('/results');
-    }, 5000);
-    
-    const interval = setInterval(() => {
-      setProgress(p => Math.min(p + 5, 100));
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
+    const updateScale = () => {
+      const scaleX = window.innerWidth / 1440;
+      setScale(scaleX > 1 ? 1 : scaleX);
     };
-  }, [navigate]);
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
+  useEffect(() => {
+    const id = analysisId || 'demo-analysis';
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + 1;
+        
+        // Update mock service
+        if (next % 5 === 0) {
+           mockAnalysisService.updateProgress(id, next, "processing");
+        }
+        
+        if (next >= 100) {
+          clearInterval(interval);
+          mockAnalysisService.updateProgress(id, 100, "completed");
+          setTimeout(() => navigate(`/analysis/${id}/results`), 500);
+          return 100;
+        }
+        return next;
+      });
+    }, 60);
+
+    return () => clearInterval(interval);
+  }, [navigate, analysisId]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center gap-2 text-xl font-semibold">
-          <Network className="w-6 h-6 text-emerald-600" />
-          <span className="font-serif">SciTrace <span className="text-emerald-600 font-sans font-bold">AI</span></span>
-        </div>
+    <div className="w-full bg-[#f8fafc] overflow-x-hidden flex justify-center font-sans" style={{ minHeight: '100vh', height: `${1000 * scale}px` }}>
+      <div 
+        className="relative bg-[#f8fafc] shrink-0 origin-top" 
+        style={{ width: '1440px', height: '1000px', transform: `scale(${scale})` }}
+      >
         
-        <nav className="hidden md:flex gap-8 text-sm font-medium">
-          <Link to="#" className="text-slate-900 border-b-2 border-slate-900 pb-1">Workspace</Link>
-          <Link to="#" className="text-slate-500 hover:text-slate-900">Analyses</Link>
-          <Link to="#" className="text-slate-500 hover:text-slate-900">Papers</Link>
+        {/* Navbar */}
+        <nav className="absolute top-0 left-0 w-full h-[80px] flex items-center justify-between px-[60px] z-50 border-b border-slate-200/50 bg-white/80 backdrop-blur-md">
+          <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+            <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
+            <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+          </Link>
+
+          <div className="flex items-center gap-10">
+            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Analyses</Link>
+            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <Link to="/analyses" title="Search Analyses" className="text-slate-400 hover:text-slate-600">
+              <Search className="w-5 h-5" strokeWidth={2} />
+            </Link>
+            <Link to="/analysis/new" className="bg-[#0b1f1b] text-white px-5 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2">
+              New Analysis <Plus className="w-4 h-4"/>
+            </Link>
+            <ProfileMenu />
+          </div>
         </nav>
-        
-        <div className="flex items-center gap-4">
-          <Search className="w-5 h-5 text-slate-500" />
-          <button className="btn btn-primary text-sm py-2 px-4 rounded-full flex items-center gap-1">
-            <Plus className="w-4 h-4" /> New Analysis
-          </button>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-6 py-8 max-w-6xl">
-        <div className="mb-8">
-          <div className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-2">Analyzing your research</div>
-          <h1 className="text-4xl font-serif text-slate-900 mb-4">Analyzing your <span className="bg-emerald-100/50 px-2 rounded">research</span></h1>
-          <p className="text-slate-600">SciTrace AI is reading your papers, identifying scientific claims, and comparing related findings.</p>
-        </div>
+        {/* Faint Background Gradients */}
+        <div className="absolute right-0 top-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.05),transparent_70%)] pointer-events-none"></div>
 
-        {/* Global Progress */}
-        <div className="mb-10 max-w-3xl">
-          <div className="flex justify-between items-end mb-2">
-            <span className="text-sm font-medium text-slate-600">3 papers • 127 candidate claims</span>
-            <span className="text-2xl font-bold text-slate-800">{progress}%</span>
+        {/* Main Content Area */}
+        <div className="absolute left-[60px] top-[120px] w-[600px]">
+          <div className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-4">
+            ANALYZING YOUR RESEARCH
           </div>
-          <div className="w-full bg-slate-200 rounded-full h-3 mb-3 overflow-hidden">
-            <div className="bg-emerald-500 h-3 rounded-full transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-            <RotateCw className="w-4 h-4 animate-spin text-emerald-600" /> Comparing related claims...
-          </div>
-        </div>
+          <h1 className="text-[52px] font-serif text-[#0f2a24] leading-[1.05] mb-5 tracking-tight">
+            Analyzing your <span className="relative inline-block mt-2 z-10 text-[#0f2a24]">
+              <span className="absolute -inset-x-2 inset-y-1 bg-[#e0f7ef] rounded-[10px] -z-10"></span>
+              research
+            </span>
+          </h1>
+          <p className="text-[16px] text-slate-500 leading-relaxed mb-8 max-w-[500px]">
+            SciTrace AI is reading your papers, identifying scientific claims, and comparing related findings.
+          </p>
 
-        {/* Stepper Grid */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
-          <div className="grid grid-cols-5 gap-4 relative">
-            {/* Connecting lines */}
-            <div className="absolute top-5 left-10 right-10 h-0.5 bg-slate-100 -z-10"></div>
-            <div className="absolute top-5 left-10 w-3/5 h-0.5 bg-emerald-500 -z-10 transition-all duration-1000"></div>
-
-            <div className="flex flex-col">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center mb-3">
-                <FileText className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div className="text-xs text-slate-400 font-bold mb-1">01</div>
-              <div className="text-sm font-semibold text-slate-800 mb-1">Extracting Document Text</div>
-              <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium mt-auto pt-2"><CheckCircle2 className="w-3.5 h-3.5" /> Complete</div>
+          <div className="mb-6">
+            <div className="flex justify-between items-end mb-3">
+              <p className="text-[14px] font-semibold text-slate-700">3 papers &nbsp;&bull;&nbsp; 127 candidate claims</p>
+              <p className="text-[24px] font-bold text-slate-800 leading-none">{progress}%</p>
             </div>
-
-            <div className="flex flex-col">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center mb-3">
-                <Search className="w-5 h-5 text-emerald-600" />
+            <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-600 rounded-full relative overflow-hidden" style={{width: `${progress}%`}}>
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.3)_50%,transparent_100%)] animate-[shimmer_1.5s_infinite]"></div>
               </div>
-              <div className="text-xs text-slate-400 font-bold mb-1">02</div>
-              <div className="text-sm font-semibold text-slate-800 mb-1">Identifying Scientific Claims</div>
-              <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium mt-auto pt-2"><CheckCircle2 className="w-3.5 h-3.5" /> Complete</div>
             </div>
-
-            <div className="flex flex-col">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center mb-3">
-                <Link2 className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div className="text-xs text-slate-400 font-bold mb-1">03</div>
-              <div className="text-sm font-semibold text-slate-800 mb-1">Finding Related Claims</div>
-              <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium mt-auto pt-2"><CheckCircle2 className="w-3.5 h-3.5" /> Complete</div>
-            </div>
-
-            <div className="flex flex-col">
-              <div className="w-10 h-10 rounded-full bg-blue-50 border-2 border-blue-500 shadow-[0_0_0_4px_rgba(59,130,246,0.1)] flex items-center justify-center mb-3 relative">
-                <BrainCircuit className="w-5 h-5 text-blue-600 animate-pulse" />
-              </div>
-              <div className="text-xs text-slate-400 font-bold mb-1">04</div>
-              <div className="text-sm font-semibold text-slate-800 mb-1">Analyzing Relationships</div>
-              <div className="flex items-center gap-1 text-xs text-blue-600 font-medium mt-auto pt-2"><RotateCw className="w-3.5 h-3.5 animate-spin" /> In Progress</div>
-            </div>
-
-            <div className="flex flex-col opacity-50">
-              <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mb-3">
-                <BookOpen className="w-5 h-5 text-slate-400" />
-              </div>
-              <div className="text-xs text-slate-400 font-bold mb-1">05</div>
-              <div className="text-sm font-semibold text-slate-800 mb-1">Building Evidence Map</div>
-              <div className="flex items-center gap-1 text-xs text-slate-500 font-medium mt-auto pt-2"><div className="w-3.5 h-3.5 border-2 border-slate-300 rounded-full"></div> Waiting</div>
+            <div className="flex items-center gap-2 mt-3 text-blue-600 font-medium text-[13px]">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              Comparing related claims...
             </div>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
-            <div className="flex gap-4">
-              <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 h-fit">
-                <BrainCircuit className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-sm text-slate-500 font-medium">Currently analyzing</h3>
-                <h2 className="text-xl font-bold text-slate-900 mb-2">Comparing related claims</h2>
-                <p className="text-sm text-slate-600">AI is evaluating relationships between potentially related scientific statements.</p>
-              </div>
-            </div>
+        {/* Top Right Graphics Area */}
+        <div className="absolute left-[680px] top-[100px] w-[700px] h-[300px] z-10">
+           {/* Connecting Lines */}
+           <svg className="absolute inset-0 w-full h-full z-0" pointerEvents="none">
+             {/* To middle column */}
+             <path d="M 120 70 C 180 70, 160 50, 220 50" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="3 3"/>
+             <path d="M 120 70 C 180 70, 160 110, 220 110" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="3 3"/>
+             <path d="M 120 160 C 180 160, 160 170, 220 170" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="3 3"/>
+             <path d="M 120 250 C 180 250, 160 230, 220 230" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="3 3"/>
+             
+             {/* To AI Node */}
+             <path d="M 330 50 C 400 50, 400 160, 450 160" fill="none" stroke="#93c5fd" strokeWidth="2" opacity="0.6"/>
+             <path d="M 330 110 C 400 110, 400 160, 450 160" fill="none" stroke="#93c5fd" strokeWidth="2" opacity="0.6"/>
+             <path d="M 330 170 C 400 170, 400 160, 450 160" fill="none" stroke="#93c5fd" strokeWidth="2" opacity="0.6"/>
+             <path d="M 330 230 C 400 230, 400 160, 450 160" fill="none" stroke="#93c5fd" strokeWidth="2" opacity="0.6"/>
+             
+             {/* To Results */}
+             <path d="M 540 160 C 580 160, 580 80, 620 80" fill="none" stroke="#34d399" strokeWidth="2" strokeDasharray="3 3" opacity="0.8"/>
+             <path d="M 540 160 C 580 160, 580 160, 620 160" fill="none" stroke="#f87171" strokeWidth="2" strokeDasharray="3 3" opacity="0.8"/>
+             <path d="M 540 160 C 580 160, 580 240, 620 240" fill="none" stroke="#fbbf24" strokeWidth="2" strokeDasharray="3 3" opacity="0.8"/>
+             
+             <circle cx="450" cy="160" r="4" fill="#3b82f6" />
+           </svg>
 
-            <div className="mt-6 border border-slate-100 bg-slate-50 rounded-xl p-4">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+           {/* Column 1: Papers */}
+           <div className="absolute left-[0px] top-[40px] flex flex-col gap-5 z-10">
+             <div className="bg-white p-2.5 rounded-lg shadow-sm border border-slate-200 w-[120px] flex items-center gap-2">
+               <div className="bg-red-50 text-red-600 text-[6px] font-bold px-1 py-0.5 rounded">PDF</div>
+               <div><p className="text-[10px] font-bold text-slate-700">Paper A</p><p className="text-[8px] text-slate-400">142 pages</p></div>
+             </div>
+             <div className="bg-white p-2.5 rounded-lg shadow-sm border border-slate-200 w-[120px] flex items-center gap-2">
+               <div className="bg-red-50 text-red-600 text-[6px] font-bold px-1 py-0.5 rounded">PDF</div>
+               <div><p className="text-[10px] font-bold text-slate-700">Paper B</p><p className="text-[8px] text-slate-400">96 pages</p></div>
+             </div>
+             <div className="bg-white p-2.5 rounded-lg shadow-sm border border-slate-200 w-[120px] flex items-center gap-2">
+               <div className="bg-red-50 text-red-600 text-[6px] font-bold px-1 py-0.5 rounded">PDF</div>
+               <div><p className="text-[10px] font-bold text-slate-700">Paper C</p><p className="text-[8px] text-slate-400">118 pages</p></div>
+             </div>
+           </div>
+
+           {/* Column 2: Claims */}
+           <div className="absolute left-[220px] top-[30px] flex flex-col gap-4 z-10">
+             <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100 w-[110px]"><div className="w-full h-1.5 bg-blue-100 rounded mb-1"></div><div className="w-2/3 h-1.5 bg-blue-100 rounded"></div></div>
+             <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100 w-[110px]"><div className="w-full h-1.5 bg-blue-100 rounded mb-1"></div><div className="w-3/4 h-1.5 bg-blue-100 rounded"></div></div>
+             <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100 w-[110px]"><div className="w-full h-1.5 bg-blue-100 rounded mb-1"></div><div className="w-1/2 h-1.5 bg-blue-100 rounded"></div></div>
+             <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100 w-[110px]"><div className="w-full h-1.5 bg-blue-100 rounded mb-1"></div><div className="w-4/5 h-1.5 bg-blue-100 rounded"></div></div>
+           </div>
+
+           {/* Column 3: AI Node */}
+           <div className="absolute left-[450px] top-[115px] w-[90px] h-[90px] bg-white border-2 border-blue-100 p-4 rounded-[1rem] shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col items-center justify-center z-20">
+             <LogoIcon className="w-7 h-7 text-blue-600 mb-1.5 animate-pulse" strokeWidth={2.5} />
+             <span className="text-[10px] font-bold text-blue-800 text-center leading-tight">AI<br/>Analysis</span>
+           </div>
+
+           {/* Column 4: Results */}
+           <div className="absolute left-[620px] top-[60px] flex flex-col gap-5 z-10">
+             <div className="bg-white p-2 rounded-lg shadow-sm border border-emerald-100 flex items-center gap-2">
+               <div className="bg-emerald-500 text-white rounded-full p-0.5"><CheckCircle2 className="w-3 h-3" strokeWidth={3}/></div>
+               <span className="text-[9px] font-bold text-emerald-700 pr-2">Supporting</span>
+             </div>
+             <div className="bg-white p-2 rounded-lg shadow-sm border border-red-100 flex items-center gap-2">
+               <div className="bg-red-500 text-white rounded-full p-0.5"><AlertTriangle className="w-3 h-3" strokeWidth={3}/></div>
+               <span className="text-[9px] font-bold text-red-700 pr-2">Contradicting</span>
+             </div>
+             <div className="bg-white p-2 rounded-lg shadow-sm border border-amber-100 flex items-center gap-2">
+               <div className="bg-amber-500 text-white rounded-full p-0.5"><LogoIcon className="w-3 h-3" strokeWidth={3}/></div>
+               <span className="text-[9px] font-bold text-amber-700 pr-2">Related</span>
+             </div>
+           </div>
+
+           {/* Labels */}
+           <div className="absolute bottom-0 w-full flex justify-between px-4 text-[9px] font-bold text-slate-400">
+             <span>Research Papers</span>
+             <span className="ml-10">Extracted Claims</span>
+             <span className="mr-8 text-blue-400">AI Analysis</span>
+             <span className="mr-16">Claim Relationships</span>
+             <span>Source Evidence</span>
+           </div>
+        </div>
+
+        {/* Steps Tracker */}
+        <div className="absolute left-[60px] top-[390px] w-[1320px] bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-slate-100 p-6 z-20 flex justify-between items-center px-10">
+           
+           <div className="flex-1 flex flex-col relative">
+             <div className="flex items-center gap-4 mb-3 relative z-10">
+               <StepIcon active={progress >= 0} complete={progress > 20} icon={FileText} />
+               <div className={`flex-1 h-[2px] mr-4 ${progress > 20 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+             </div>
+             <span className="text-[10px] font-bold text-slate-400 mb-1">01</span>
+             <h4 className="font-bold text-[14px] text-slate-800 mb-1">Extracting Document Text</h4>
+             <p className="text-[12px] text-slate-500 mb-2">Reading text from your research papers.</p>
+           </div>
+
+           <div className="flex-1 flex flex-col relative">
+             <div className="flex items-center gap-4 mb-3 relative z-10">
+               <StepIcon active={progress >= 20} complete={progress > 40} icon={Search} />
+               <div className={`flex-1 h-[2px] mr-4 ${progress > 40 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+             </div>
+             <span className="text-[10px] font-bold text-slate-400 mb-1">02</span>
+             <h4 className="font-bold text-[14px] text-slate-800 mb-1">Identifying Scientific Claims</h4>
+             <p className="text-[12px] text-slate-500 mb-2">Finding relevant scientific statements.</p>
+           </div>
+
+           <div className="flex-1 flex flex-col relative">
+             <div className="flex items-center gap-4 mb-3 relative z-10">
+               <StepIcon active={progress >= 40} complete={progress > 70} icon={LinkIcon} />
+               <div className={`flex-1 h-[2px] mr-4 ${progress > 70 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+             </div>
+             <span className="text-[10px] font-bold text-slate-400 mb-1">03</span>
+             <h4 className="font-bold text-[14px] text-slate-800 mb-1">Finding Related Claims</h4>
+             <p className="text-[12px] text-slate-500 mb-2">Comparing claims based on semantic similarity.</p>
+           </div>
+
+           <div className="flex-1 flex flex-col relative">
+             <div className="flex items-center gap-4 mb-3 relative z-10">
+               <StepIcon active={progress >= 70} complete={progress > 90} icon={BrainCircuit} />
+               <div className={`flex-1 h-[2px] mr-4 ${progress > 90 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+             </div>
+             <span className="text-[10px] font-bold text-slate-400 mb-1">04</span>
+             <h4 className="font-bold text-[14px] text-slate-800 mb-1">Analyzing Relationships</h4>
+             <p className="text-[12px] text-slate-500 mb-2">Evaluating whether related claims support, contradict, or remain neutral.</p>
+           </div>
+
+           <div className="flex-1 flex flex-col relative">
+             <div className="flex items-center gap-4 mb-3 relative z-10">
+               <StepIcon active={progress >= 90} complete={progress >= 100} icon={BookOpen} />
+             </div>
+             <span className="text-[10px] font-bold text-slate-400 mb-1">05</span>
+             <h4 className="font-bold text-[14px] text-slate-800 mb-1">Building Evidence Map</h4>
+             <p className="text-[12px] text-slate-500 mb-2">Connecting findings to their original papers and page references.</p>
+           </div>
+
+        </div>
+
+        {/* Bottom Three Cards Container */}
+        <div className="absolute left-[60px] top-[560px] w-[1320px] flex gap-6 z-20">
+          
+          {/* Main Analyzing Card */}
+          <div className="flex-[2] bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-slate-100 p-6 flex gap-6">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600"><BrainCircuit className="w-5 h-5"/></div>
                 <div>
-                  <p className="text-sm font-medium text-slate-800 italic">"Deep learning models significantly improve classification accuracy..."</p>
-                  <p className="text-xs text-slate-500 mt-1">Page 12 • Paper A</p>
+                  <p className="text-[12px] font-bold text-slate-400">Currently analyzing</p>
+                  <h3 className="text-[18px] font-bold text-slate-800 leading-tight">Comparing related claims</h3>
                 </div>
               </div>
-              <div className="flex justify-center -my-2 relative z-10">
-                <div className="bg-white border border-slate-200 p-1.5 rounded shadow-sm text-[10px] font-bold text-slate-500 uppercase">Vs</div>
-              </div>
-              <div className="flex items-start gap-3 mt-4">
-                <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5 shrink-0"></div>
-                <div>
-                  <p className="text-sm font-medium text-slate-800 italic">"Traditional machine learning performs similarly on small datasets..."</p>
-                  <p className="text-xs text-slate-500 mt-1">Page 8 • Paper B</p>
+              <p className="text-[13px] text-slate-500 mb-8 max-w-[300px]">AI is evaluating relationships between potentially related scientific statements.</p>
+              
+              <div className="mt-auto">
+                <div className="flex justify-between items-end mb-2">
+                  <p className="text-[14px] font-bold text-slate-700">Claim pair 42 of 84</p>
+                  <p className="text-[14px] font-bold text-slate-500">50%</p>
                 </div>
+                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-600 w-1/2 rounded-full relative">
+                     <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.3)_50%,transparent_100%)] animate-[shimmer_1.5s_infinite]"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-[1px] bg-slate-100"></div>
+
+            <div className="flex-1 flex flex-col justify-center">
+              <p className="text-[12px] font-bold text-slate-400 mb-3">Example comparison</p>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-3 relative">
+                <div className="absolute left-4 top-5 w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
+                <p className="text-[12px] text-slate-700 font-medium pl-4">"Deep learning models significantly improve classification accuracy..."</p>
+                <p className="text-[10px] text-slate-400 pl-4 mt-1">Page 12 &bull; Paper A</p>
+              </div>
+              <div className="flex justify-center -my-1 z-10"><Activity className="w-4 h-4 text-blue-400 bg-white"/></div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 relative">
+                <div className="absolute left-4 top-5 w-1.5 h-1.5 bg-red-400 rounded-full"></div>
+                <p className="text-[12px] text-slate-700 font-medium pl-4">"Traditional machine learning performs similarly on small datasets..."</p>
+                <p className="text-[10px] text-slate-400 pl-4 mt-1">Page 8 &bull; Paper B</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <h3 className="font-semibold text-slate-800 mb-4">Processing Summary</h3>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
-                <div className="text-2xl font-serif font-bold text-slate-900">3</div>
-                <div className="text-xs text-slate-500 font-medium">Papers</div>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
-                <div className="text-2xl font-serif font-bold text-slate-900">127</div>
-                <div className="text-xs text-slate-500 font-medium">Claims Found</div>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
-                <div className="text-2xl font-serif font-bold text-slate-900">84</div>
-                <div className="text-xs text-slate-500 font-medium">Claim Pairs</div>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
-                <div className="text-2xl font-serif font-bold text-slate-900">42</div>
-                <div className="text-xs text-slate-500 font-medium">Pairs Analyzed</div>
+          {/* Processing Summary & Info */}
+          <div className="flex-1 flex flex-col gap-4">
+             <div className="bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-slate-100 p-6 flex-1">
+               <h3 className="text-[14px] font-bold text-slate-800 mb-4">Processing Summary</h3>
+               <div className="grid grid-cols-4 gap-4">
+                 <div className="text-center">
+                   <FileText className="w-5 h-5 text-blue-500 mx-auto mb-1"/>
+                   <p className="text-[20px] font-bold text-slate-800">3</p>
+                   <p className="text-[10px] text-slate-500">Papers</p>
+                 </div>
+                 <div className="text-center">
+                   <span className="font-serif font-bold text-[20px] text-blue-500 block leading-none mb-1">"</span>
+                   <p className="text-[20px] font-bold text-slate-800">127</p>
+                   <p className="text-[10px] text-slate-500">Claims Found</p>
+                 </div>
+                 <div className="text-center">
+                   <LogoIcon className="w-5 h-5 text-blue-500 mx-auto mb-1"/>
+                   <p className="text-[20px] font-bold text-slate-800">84</p>
+                   <p className="text-[10px] text-slate-500">Claim Pairs</p>
+                 </div>
+                 <div className="text-center">
+                   <Activity className="w-5 h-5 text-blue-500 mx-auto mb-1"/>
+                   <p className="text-[20px] font-bold text-slate-800">42</p>
+                   <p className="text-[10px] text-slate-500">Pairs Analyzed</p>
+                 </div>
+               </div>
+             </div>
+
+             <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5 flex gap-4">
+               <div className="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center shrink-0">
+                 <Info className="w-4 h-4" />
+               </div>
+               <div>
+                 <h4 className="font-bold text-[13px] text-slate-800 mb-1">Why does this take a moment?</h4>
+                 <p className="text-[11px] text-slate-600 leading-relaxed">SciTrace AI compares related claims rather than simply matching keywords. This allows the system to identify relationships even when different papers use different terminology.</p>
+               </div>
+             </div>
+          </div>
+
+        </div>
+
+        {/* Papers Status Row */}
+        <div className="absolute left-[60px] top-[790px] w-[860px] flex gap-4 z-20">
+          <p className="absolute -top-6 left-0 text-[13px] font-bold text-slate-800">Research Papers</p>
+          
+          <div className="flex-1 bg-white border border-slate-200 rounded-xl p-3 flex gap-3 shadow-sm">
+            <div className="bg-slate-50 border border-slate-200 rounded p-1.5 flex flex-col items-center justify-center w-[30px] h-[38px] shrink-0">
+               <div className="w-[12px] h-[1px] bg-slate-300 mb-[2px]"></div>
+               <div className="w-[12px] h-[1px] bg-slate-300 mb-[2px]"></div>
+               <div className="w-[8px] h-[1px] bg-slate-300 self-start ml-[3px]"></div>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-[11px] text-slate-800 truncate pr-4">Deep Learning for Medical Image Classification</h4>
+              <p className="text-[9px] text-slate-500 mb-1">142 pages</p>
+              <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[10px]">
+                <CheckCircle2 className="w-3 h-3"/> Processed
               </div>
             </div>
+          </div>
 
-            <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100/50">
-              <h4 className="text-xs font-bold text-blue-800 mb-1 flex items-center gap-1.5"><Search className="w-3.5 h-3.5" /> Why does this take a moment?</h4>
-              <p className="text-[11px] text-slate-600 leading-relaxed">SciTrace AI compares related claims rather than simply matching keywords. This allows the system to identify relationships even when different papers use different terminology.</p>
+          <div className="flex-1 bg-white border border-slate-200 rounded-xl p-3 flex gap-3 shadow-sm">
+            <div className="bg-slate-50 border border-slate-200 rounded p-1.5 flex flex-col items-center justify-center w-[30px] h-[38px] shrink-0">
+               <div className="w-[12px] h-[1px] bg-slate-300 mb-[2px]"></div>
+               <div className="w-[12px] h-[1px] bg-slate-300 mb-[2px]"></div>
+               <div className="w-[8px] h-[1px] bg-slate-300 self-start ml-[3px]"></div>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-[11px] text-slate-800 truncate pr-4">Comparative Study of Neural Classification Methods</h4>
+              <p className="text-[9px] text-slate-500 mb-1">96 pages</p>
+              <div className="flex items-center gap-1.5 text-blue-600 font-bold text-[10px]">
+                <RefreshCw className="w-3 h-3 animate-spin"/> Processing
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-white border border-slate-200 rounded-xl p-3 flex gap-3 shadow-sm opacity-60">
+            <div className="bg-slate-50 border border-slate-200 rounded p-1.5 flex flex-col items-center justify-center w-[30px] h-[38px] shrink-0">
+               <div className="w-[12px] h-[1px] bg-slate-300 mb-[2px]"></div>
+               <div className="w-[12px] h-[1px] bg-slate-300 mb-[2px]"></div>
+               <div className="w-[8px] h-[1px] bg-slate-300 self-start ml-[3px]"></div>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-[11px] text-slate-800 truncate pr-4">Evaluation of Modern Machine Learning Models</h4>
+              <p className="text-[9px] text-slate-500 mb-1">118 pages</p>
+              <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[10px]">
+                <div className="w-3 h-3 rounded-full border-2 border-slate-300"></div> Waiting
+              </div>
             </div>
           </div>
         </div>
 
-      </main>
+        {/* Bottom Notice */}
+        <div className="absolute bottom-[20px] w-full flex justify-center z-30">
+          <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+             <ShieldCheck className="w-4 h-4"/>
+             <span className="font-bold text-slate-700">AI predictions are not scientific conclusions.</span> SciTrace AI highlights potential relationships between research claims and provides source evidence for further investigation.
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
