@@ -19,21 +19,10 @@ const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
 );
 
 export default function PaperDetails() {
-  const [scale, setScale] = useState(1);
   const { analysisId, paperId } = useParams();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const updateScale = () => {
-      const scaleX = window.innerWidth / 1440;
-      setScale(scaleX > 1 ? 1 : scaleX);
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -85,14 +74,10 @@ export default function PaperDetails() {
   };
 
   return (
-    <div className="w-full bg-[#f8fafc] overflow-x-hidden flex justify-center font-sans" style={{ minHeight: '100vh', height: `${1650 * scale}px` }}>
-      <div 
-        className="relative bg-[#f8fafc] shrink-0 origin-top" 
-        style={{ width: '1440px', height: '1650px', transform: `scale(${scale})` }}
-      >
-        {/* Navbar */}
-        <nav className="absolute top-0 left-0 w-full h-[80px] flex items-center justify-between px-[60px] z-50 border-b border-slate-200/50 bg-white">
-          <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+    <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col overflow-x-hidden">
+      {/* Navbar */}
+      <nav className="sticky top-0 w-full h-[80px] flex items-center justify-between px-6 lg:px-[60px] z-50 border-b border-slate-200/50 bg-white">
+        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
             <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
           </Link>
@@ -121,15 +106,15 @@ export default function PaperDetails() {
         </nav>
 
         {/* Main Content Area */}
-        <div className="absolute left-[60px] top-[100px] w-[1320px] flex flex-col">
+        <main className="w-full max-w-[1440px] mx-auto px-6 lg:px-[60px] py-10 flex flex-col flex-1">
           
-          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2 flex-wrap">
              Workspace <ChevronRight className="w-3 h-3"/> Analysis Results <ChevronRight className="w-3 h-3"/> Paper Details
           </div>
 
           {/* Header Card */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 flex justify-between items-start shadow-sm mb-6">
-            <div className="flex gap-6">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start shadow-sm mb-6 gap-6">
+            <div className="flex flex-col sm:flex-row gap-6">
               {/* Paper Icon */}
               <div className="bg-[#f8fafc] border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center w-[70px] h-[90px] shrink-0 shadow-sm relative">
                 <div className="w-[30px] h-[2px] bg-slate-300 mb-[4px] rounded-full"></div>
@@ -145,7 +130,7 @@ export default function PaperDetails() {
                   {paper.title}
                 </h1>
                 <p className="text-[14px] text-slate-500 mb-4">Research Paper</p>
-                <div className="flex items-center gap-6 text-[13px] text-slate-600">
+                <div className="flex flex-wrap items-center gap-4 md:gap-6 text-[13px] text-slate-600">
                   <div className="flex items-center gap-1.5"><FileText className="w-4 h-4"/> {paper.pages || '?'} pages</div>
                   <div className="flex items-center gap-1.5"><LogoIcon className="w-4 h-4"/> {paperClaims.length} claims extracted</div>
                   <div className="flex items-center gap-1.5"><Share2 className="w-4 h-4"/> {paperRelationships.length} related claims</div>
@@ -154,7 +139,7 @@ export default function PaperDetails() {
               </div>
             </div>
 
-            <div className="flex flex-col items-end gap-4">
+            <div className="flex flex-col items-start md:items-end gap-4">
               <div className="flex items-center gap-3">
                  <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-100">
                    <CheckCircle2 className="w-4 h-4"/>
@@ -175,8 +160,8 @@ export default function PaperDetails() {
           </div>
 
           {/* Top Stats */}
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1 bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4 shadow-sm">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="flex-1 bg-white rounded-xl border border-slate-200 p-5 flex flex-col md:flex-row items-center md:items-start gap-4 shadow-sm text-center md:text-left">
               <div className="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100"><FileText className="w-5 h-5"/></div>
               <div>
                 <p className="text-[11px] font-bold text-slate-800 mb-0.5">Claims</p>
@@ -184,7 +169,7 @@ export default function PaperDetails() {
                 <p className="text-[11px] text-slate-500 leading-tight">Scientific statements<br/>identified.</p>
               </div>
             </div>
-            <div className="flex-1 bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4 shadow-sm">
+            <div className="flex-1 bg-white rounded-xl border border-slate-200 p-5 flex flex-col md:flex-row items-center md:items-start gap-4 shadow-sm text-center md:text-left">
               <div className="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100"><Share2 className="w-5 h-5"/></div>
               <div>
                 <p className="text-[11px] font-bold text-slate-800 mb-0.5">Related Claims</p>
@@ -192,7 +177,7 @@ export default function PaperDetails() {
                 <p className="text-[11px] text-slate-500 leading-tight">Claims connected to<br/>other papers.</p>
               </div>
             </div>
-            <div className="flex-1 bg-red-50 rounded-xl border border-red-200 p-5 flex items-center gap-4 shadow-sm">
+            <div className="flex-1 bg-red-50 rounded-xl border border-red-200 p-5 flex flex-col md:flex-row items-center md:items-start gap-4 shadow-sm text-center md:text-left">
               <div className="w-12 h-12 rounded-lg bg-white text-red-600 flex items-center justify-center shrink-0 border border-red-200 shadow-sm"><AlertTriangle className="w-5 h-5"/></div>
               <div>
                 <p className="text-[11px] font-bold text-red-700 mb-0.5">Potential Contradictions</p>
@@ -200,7 +185,7 @@ export default function PaperDetails() {
                 <p className="text-[11px] text-red-600/70 leading-tight">Relationships requiring<br/>investigation.</p>
               </div>
             </div>
-            <div className="flex-1 bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4 shadow-sm">
+            <div className="flex-1 bg-white rounded-xl border border-slate-200 p-5 flex flex-col md:flex-row items-center md:items-start gap-4 shadow-sm text-center md:text-left">
               <div className="w-12 h-12 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200"><BookOpen className="w-5 h-5"/></div>
               <div>
                 <p className="text-[11px] font-bold text-slate-800 mb-0.5">Pages Referenced</p>
@@ -211,7 +196,7 @@ export default function PaperDetails() {
           </div>
 
           {/* Middle Row */}
-          <div className="flex gap-6 mb-6">
+          <div className="flex flex-col lg:flex-row gap-6 mb-6">
             
             {/* Paper Overview */}
             <div className="flex-[1.5] bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col">
@@ -225,13 +210,13 @@ export default function PaperDetails() {
             </div>
 
             {/* Claim Relationships Chart */}
-            <div className="flex-[1.2] bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex gap-6">
+            <div className="flex-[1.2] bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col lg:flex-row gap-6">
               <div className="flex-1">
                 <h3 className="font-bold text-[16px] text-slate-800 mb-1 flex items-center gap-2">Claim Relationships <Info className="w-3.5 h-3.5 text-slate-400"/></h3>
                 <p className="text-[12px] text-slate-500 mb-6">How claims from this paper relate to claims in other papers.</p>
                 
-                <div className="flex justify-between items-center pr-6">
-                  <div className="w-[120px] h-[120px] relative rounded-full border-[12px] border-slate-100 flex items-center justify-center">
+                <div className="flex flex-col sm:flex-row justify-between items-center pr-0 lg:pr-6 gap-6">
+                  <div className="w-[120px] h-[120px] relative rounded-full border-[12px] border-slate-100 flex items-center justify-center shrink-0">
                     <div className="absolute inset-[-12px] rounded-full border-[12px] border-emerald-500 [clip-path:polygon(0_0,50%_0,50%_50%,0_0)]"></div>
                     <div className="absolute inset-[-12px] rounded-full border-[12px] border-emerald-500 [clip-path:polygon(50%_0,100%_0,100%_20%,50%_50%)]"></div>
                     <div className="absolute inset-[-12px] rounded-full border-[12px] border-slate-300 [clip-path:polygon(100%_20%,100%_100%,0_100%,0_50%,50%_50%)]"></div>
@@ -287,7 +272,7 @@ export default function PaperDetails() {
             </div>
           </div>
 
-          <div className="flex gap-6 min-h-0 h-[800px]">
+          <div className="flex flex-col lg:flex-row gap-6 min-h-0 flex-1">
             {/* Left Column Data */}
             <div className="flex-[2] flex flex-col gap-6">
               
@@ -300,8 +285,8 @@ export default function PaperDetails() {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <div className="flex-1 relative">
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex-1 relative min-w-[200px]">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input 
                       type="text" 
@@ -367,15 +352,17 @@ export default function PaperDetails() {
                       }
 
                       return (
-                        <div key={claim.id} className="bg-white border border-slate-200 rounded-xl p-4 flex gap-4 shadow-sm items-center">
-                          <div className="bg-slate-50 border border-slate-200 rounded-lg w-12 h-12 flex flex-col items-center justify-center shrink-0">
-                            <span className="text-[12px] font-bold text-slate-800 leading-none mb-1">{(idx + 1).toString().padStart(2, '0')}</span>
-                            <span className="text-[9px] text-slate-500">Page {claim.page}</span>
+                        <div key={claim.id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row gap-4 shadow-sm md:items-center">
+                          <div className="flex gap-4">
+                            <div className="bg-slate-50 border border-slate-200 rounded-lg w-12 h-12 flex flex-col items-center justify-center shrink-0">
+                              <span className="text-[12px] font-bold text-slate-800 leading-none mb-1">{(idx + 1).toString().padStart(2, '0')}</span>
+                              <span className="text-[9px] text-slate-500">Page {claim.page}</span>
+                            </div>
                           </div>
-                          <div className="flex-1 pr-4">
-                            <p className="text-[13px] text-slate-800 font-medium leading-relaxed">"{claim.text}"</p>
+                          <div className="flex-1">
+                            <p className="text-[13px] text-slate-800 font-medium leading-relaxed break-words">"{claim.text}"</p>
                           </div>
-                          <div className="w-[180px] shrink-0 border-l border-slate-100 pl-4 py-1">
+                          <div className="w-full md:w-[180px] shrink-0 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-1 md:pl-4">
                             {rels.length > 0 ? (
                               <>
                                 <div className={`flex items-center gap-1.5 mb-1 text-[10px] font-bold px-1.5 py-0.5 rounded w-fit ${severityColor}`}>
@@ -397,7 +384,7 @@ export default function PaperDetails() {
                               </>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mt-2 md:mt-0 justify-end md:justify-start border-t md:border-none border-slate-100 pt-3 md:pt-0">
                             {rels.length > 0 ? (
                               <Link to={`/analysis/${analysis.id}/evidence/${rels[0].id}`} className="bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded text-[11px] font-bold shadow-sm hover:bg-slate-50 flex items-center gap-1.5">View Evidence &rarr;</Link>
                             ) : (
@@ -469,9 +456,7 @@ export default function PaperDetails() {
 
             </div>
           </div>
-        </div>
-
-      </div>
+        </main>
     </div>
   );
 }

@@ -19,7 +19,6 @@ const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
 );
 
 export default function Results() {
-  const [scale, setScale] = useState(1);
   const { analysisId } = useParams();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,16 +26,6 @@ export default function Results() {
   const [filterPaper, setFilterPaper] = useState('all');
   const [sortMode, setSortMode] = useState('relevance');
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const updateScale = () => {
-      const scaleX = window.innerWidth / 1440;
-      setScale(scaleX > 1 ? 1 : scaleX);
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -107,14 +96,10 @@ export default function Results() {
   const getPaperById = (id) => analysis.papers?.find(p => p.id === id);
 
   return (
-    <div className="w-full bg-[#f8fafc] overflow-x-hidden flex justify-center font-sans" style={{ minHeight: '100vh', height: `${1000 * scale}px` }}>
-      <div 
-        className="relative bg-[#f8fafc] shrink-0 origin-top" 
-        style={{ width: '1440px', height: '1000px', transform: `scale(${scale})` }}
-      >
-        
-        {/* Navbar */}
-        <nav className="absolute top-0 left-0 w-full h-[80px] flex items-center justify-between px-[60px] z-50 border-b border-slate-200/50 bg-white">
+    <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col overflow-x-hidden">
+      
+      {/* Navbar */}
+      <nav className="sticky top-0 w-full h-[80px] flex items-center justify-between px-6 lg:px-[60px] z-50 border-b border-slate-200/50 bg-white">
           <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
             <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
@@ -144,7 +129,7 @@ export default function Results() {
         </nav>
 
         {/* Background Stack of Papers (Right Side) */}
-        <div className="absolute right-[-100px] top-[100px] w-[600px] h-[800px] z-0 pointer-events-none opacity-40">
+        <div className="absolute right-0 top-[100px] w-[600px] h-[800px] z-0 pointer-events-none opacity-40 overflow-hidden hidden xl:block">
           {Array.from({ length: 6 }).map((_, i) => (
             <div 
               key={i} 
@@ -155,10 +140,10 @@ export default function Results() {
         </div>
 
         {/* Main Content Area */}
-        <div className="absolute left-[60px] top-[100px] w-[1320px] h-[780px] overflow-hidden flex flex-col">
+        <main className="w-full max-w-[1440px] mx-auto px-6 lg:px-[60px] py-10 flex flex-col relative z-10 flex-1">
           
           {/* Header Row */}
-          <div className="flex justify-between items-start mb-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
             <div>
               <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                  Workspace <ChevronRight className="w-3 h-3"/> Analysis Results
@@ -192,7 +177,7 @@ export default function Results() {
           </div>
 
           {/* Stats Row */}
-          <div className="flex gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
             <div className="flex-1 bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100"><FileText className="w-5 h-5"/></div>
               <div>
@@ -236,12 +221,12 @@ export default function Results() {
           </div>
 
           {/* Main Layout Grid */}
-          <div className="flex gap-6 h-full min-h-0">
+          <div className="flex flex-col xl:flex-row gap-6 flex-1 min-h-0">
             {/* Left Column */}
-            <div className="flex-[2.5] flex flex-col gap-6 min-h-0">
+            <div className="flex-[2.5] flex flex-col gap-6 min-h-0 w-full overflow-hidden">
               
               {/* Chart Card */}
-              <div className="bg-white rounded-xl border border-slate-200 p-6 flex gap-10">
+              <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col lg:flex-row gap-10">
                 <div className="w-[180px]">
                   <h3 className="font-bold text-[16px] text-slate-800 mb-1">Claim Relationships</h3>
                   <p className="text-[12px] text-slate-500 mb-6">How the analyzed claims relate to one another.</p>
@@ -280,29 +265,47 @@ export default function Results() {
                 <div className="flex-1 flex flex-col justify-center">
                   <p className="text-[12px] font-bold text-slate-800 mb-4">Relationship Distribution Across Papers</p>
                   <div className="space-y-4">
-                    {analysis.papers.slice(0, 3).map((paper, i) => (
-                      <div key={i} className="flex items-center gap-4 text-[11px]">
-                        <span className="text-slate-600 w-12 truncate" title={paper.title}>{paper.title.substring(0, 10)}...</span>
-                        <div className="flex-1 h-3 flex rounded-sm overflow-hidden">
-                           <div className="bg-emerald-400" style={{width: `${Math.max(10, 30 + (i * 15))}%`}}></div>
-                           <div className="bg-red-400" style={{width: `${Math.max(5, 20 - (i * 5))}%`}}></div>
-                           <div className="bg-slate-300 flex-1"></div>
+                    {(() => {
+                      const paperStats = analysis.papers.map(p => {
+                        const rels = relationships.filter(r => {
+                          const sc = getClaimById(r.sourceClaimId);
+                          const tc = getClaimById(r.targetClaimId);
+                          return sc?.paperId === p.id || tc?.paperId === p.id;
+                        });
+                        const sup = rels.filter(r => r.type === 'supporting').length;
+                        const con = rels.filter(r => r.type === 'contradiction').length;
+                        const neu = rels.filter(r => r.type === 'neutral' || r.type === 'related').length;
+                        return { title: p.title, total: rels.length, sup, con, neu };
+                      }).sort((a,b) => b.total - a.total).slice(0,3);
+                      
+                      return paperStats.map((stat, i) => (
+                        <div key={i} className="flex items-center gap-4 text-[11px]">
+                          <span className="text-slate-600 w-24 truncate" title={stat.title}>{stat.title}</span>
+                          <div className="flex-1 h-3 flex rounded-sm overflow-hidden bg-slate-100">
+                             {stat.total > 0 && (
+                               <>
+                                 <div className="bg-emerald-400" style={{width: `${(stat.sup/stat.total)*100}%`}}></div>
+                                 <div className="bg-red-400" style={{width: `${(stat.con/stat.total)*100}%`}}></div>
+                                 <div className="bg-slate-300" style={{width: `${(stat.neu/stat.total)*100}%`}}></div>
+                               </>
+                             )}
+                          </div>
+                          <span className="text-slate-800 font-bold w-4 text-right">{stat.total}</span>
                         </div>
-                        <span className="text-slate-800 font-bold w-4">{12 + i * 5}</span>
-                      </div>
-                    ))}
+                      ));
+                    })()}
                   </div>
                 </div>
               </div>
 
               {/* Filters */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button onClick={() => setFilterType('all')} className={`${filterType === 'all' ? 'bg-slate-800 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'} px-4 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-colors`}>All ({relationships.length})</button>
                 <button onClick={() => setFilterType('supporting')} className={`${filterType === 'supporting' ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'} px-4 py-1.5 rounded-full text-[12px] font-medium cursor-pointer transition-colors`}>Supporting ({supporting.length})</button>
                 <button onClick={() => setFilterType('contradiction')} className={`${filterType === 'contradiction' ? 'bg-red-600 text-white shadow-sm' : 'bg-red-50 border border-red-200 text-red-700 hover:bg-red-100'} px-4 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-colors`}>Potential Contradictions ({contradictions.length})</button>
                 <button onClick={() => setFilterType('neutral')} className={`${filterType === 'neutral' ? 'bg-slate-500 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'} px-4 py-1.5 rounded-full text-[12px] font-medium cursor-pointer transition-colors`}>Neutral ({neutral.length})</button>
                 
-                <div className="ml-auto flex items-center gap-3">
+                <div className="ml-auto flex flex-wrap items-center gap-3 w-full lg:w-auto mt-2 lg:mt-0">
                   <select 
                     value={filterPaper} 
                     onChange={(e) => setFilterPaper(e.target.value)}
@@ -389,41 +392,42 @@ export default function Results() {
                             <ChevronRight className={`w-4 h-4 ${isContradiction ? 'text-red-300' : isSupporting ? 'text-emerald-300' : 'text-slate-300'} rotate-90`}/>
                           </div>
                         </div>
-                        <div className="p-5">
-                          <div className="flex gap-6 relative">
-                            <div className="flex-1">
+                        <div className="p-5 overflow-x-auto">
+                          <div className="flex flex-col md:flex-row gap-6 relative min-w-0">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-start gap-2 mb-2">
                                 <FileText className="w-4 h-4 text-slate-400 mt-0.5 shrink-0"/>
-                                <div>
+                                <div className="min-w-0">
                                   <p className="text-[10px] font-bold text-slate-800">Paper A</p>
-                                  <p className="text-[11px] font-semibold text-blue-600">{sourcePaper?.title}</p>
+                                  <p className="text-[11px] font-semibold text-blue-600 truncate">{sourcePaper?.title}</p>
                                   <p className="text-[10px] text-slate-400">Page {sourceClaim.page}</p>
                                 </div>
                               </div>
                               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="text-[13px] text-slate-700 font-medium italic">"{sourceClaim.text}"</p>
+                                <p className="text-[13px] text-slate-700 font-medium italic break-words">"{sourceClaim.text}"</p>
                               </div>
                             </div>
 
                             {/* Connection Graphic */}
-                            <div className="w-20 shrink-0 flex flex-col items-center justify-center relative">
-                              <div className={`w-full h-[1px] absolute top-1/2 -z-10 ${isContradiction ? 'bg-red-200' : isSupporting ? 'bg-emerald-200' : 'bg-slate-200'}`}></div>
+                            <div className="md:w-20 shrink-0 flex md:flex-col items-center justify-center relative my-2 md:my-0">
+                              <div className={`hidden md:block w-full h-[1px] absolute top-1/2 -z-10 ${isContradiction ? 'bg-red-200' : isSupporting ? 'bg-emerald-200' : 'bg-slate-200'}`}></div>
+                              <div className={`md:hidden h-full w-[1px] absolute left-1/2 -z-10 ${isContradiction ? 'bg-red-200' : isSupporting ? 'bg-emerald-200' : 'bg-slate-200'}`}></div>
                               <div className={`w-10 h-10 bg-white border rounded-full flex flex-col items-center justify-center shadow-sm relative z-10 ${isContradiction ? 'border-red-200 text-red-500' : isSupporting ? 'border-emerald-200 text-emerald-500' : 'border-slate-200 text-slate-500'}`}>
                                 {isContradiction ? <ArrowUpDown className="w-4 h-4 mb-0.5"/> : isSupporting ? <CheckCircle2 className="w-4 h-4 mb-0.5"/> : <LogoIcon className="w-4 h-4 mb-0.5"/>}
                               </div>
                             </div>
 
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-start gap-2 mb-2">
                                 <FileText className="w-4 h-4 text-slate-400 mt-0.5 shrink-0"/>
-                                <div>
+                                <div className="min-w-0">
                                   <p className="text-[10px] font-bold text-slate-800">Paper B</p>
-                                  <p className="text-[11px] font-semibold text-blue-600">{targetPaper?.title}</p>
+                                  <p className="text-[11px] font-semibold text-blue-600 truncate">{targetPaper?.title}</p>
                                   <p className="text-[10px] text-slate-400">Page {targetClaim.page}</p>
                                 </div>
                               </div>
                               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="text-[13px] text-slate-700 font-medium italic">"{targetClaim.text}"</p>
+                                <p className="text-[13px] text-slate-700 font-medium italic break-words">"{targetClaim.text}"</p>
                               </div>
                             </div>
                           </div>
@@ -533,9 +537,7 @@ export default function Results() {
 
             </div>
           </div>
-        </div>
-
-      </div>
+        </main>
     </div>
   );
 }

@@ -19,20 +19,9 @@ const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
 );
 
 export default function Export() {
-  const [scale, setScale] = useState(1);
   const { analysisId } = useParams();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const updateScale = () => {
-      const scaleX = window.innerWidth / 1440;
-      setScale(scaleX > 1 ? 1 : scaleX);
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -96,14 +85,10 @@ export default function Export() {
   };
 
   return (
-    <div className="w-full bg-[#f8fafc] overflow-x-hidden flex justify-center font-sans" style={{ minHeight: '100vh', height: `${1000 * scale}px` }}>
-      <div 
-        className="relative bg-[#f8fafc] shrink-0 origin-top" 
-        style={{ width: '1440px', height: '1000px', transform: `scale(${scale})` }}
-      >
-        {/* Navbar */}
-        <nav className="absolute top-0 left-0 w-full h-[80px] flex items-center justify-between px-[60px] z-50 border-b border-slate-200/50 bg-white">
-          <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+    <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col overflow-x-hidden">
+      {/* Navbar */}
+      <nav className="sticky top-0 w-full h-[80px] flex items-center justify-between px-6 lg:px-[60px] z-50 border-b border-slate-200/50 bg-white">
+        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
             <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
           </Link>
@@ -129,11 +114,11 @@ export default function Export() {
         </nav>
 
         {/* Main Content Area */}
-        <div className="absolute left-[60px] top-[100px] w-[1320px] h-[850px] flex flex-col">
+        <main className="w-full max-w-[1440px] mx-auto px-6 lg:px-[60px] py-10 flex flex-col flex-1">
           
           {/* Header Row */}
           <div className="mb-8">
-            <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2 flex-wrap">
                 Workspace <ChevronRight className="w-3 h-3"/> Analysis Results <ChevronRight className="w-3 h-3"/> Export
             </div>
             <h1 className="text-[40px] font-serif text-[#0f2a24] leading-none mb-3 tracking-tight">
@@ -151,7 +136,7 @@ export default function Export() {
             </div>
           </div>
 
-          <div className="flex gap-8">
+          <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Column - Options */}
             <div className="flex-1 flex flex-col gap-8">
               
@@ -160,7 +145,7 @@ export default function Export() {
                 <h3 className="text-[18px] font-bold text-slate-800 mb-1">What would you like to include?</h3>
                 <p className="text-[13px] text-slate-500 mb-4">Select the content to include in your export report.</p>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label className="bg-white border border-slate-200 rounded-xl p-4 flex gap-4 shadow-sm cursor-pointer hover:border-blue-300 transition-colors">
                     <input type="checkbox" className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" defaultChecked />
                     <div>
@@ -211,7 +196,7 @@ export default function Export() {
                 <h3 className="text-[18px] font-bold text-slate-800 mb-1">Choose Export Format</h3>
                 <p className="text-[13px] text-slate-500 mb-4">Select the format for your exported analysis.</p>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-blue-50 border-2 border-blue-500 rounded-xl p-5 shadow-sm relative">
                     <div className="absolute top-4 right-4 w-4 h-4 rounded-full border-[4px] border-blue-500 bg-white"></div>
                     <BarChart2 className="w-6 h-6 text-blue-600 mb-3"/>
@@ -259,7 +244,7 @@ export default function Export() {
             {/* Right Column - Preview */}
             <div className="flex-[1.2] flex flex-col gap-4">
               
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-4 lg:mb-0">
                 <div>
                   <h3 className="text-[16px] font-bold text-slate-800">Report Preview</h3>
                   <p className="text-[12px] text-slate-500">This is a preview of what will be included in your export.</p>
@@ -272,7 +257,7 @@ export default function Export() {
               </div>
 
               {/* Preview Document */}
-              <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-8 h-[550px] overflow-hidden relative">
+              <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-6 md:p-8 h-[550px] overflow-hidden relative">
                 
                 {/* PDF Header */}
                 <div className="flex justify-between items-start mb-8 border-b border-slate-100 pb-6">
@@ -291,7 +276,7 @@ export default function Export() {
 
                 {/* PDF Content */}
                 <h3 className="font-bold text-[14px] text-slate-800 mb-3 border-b border-slate-100 pb-2">Analysis Summary</h3>
-                <div className="grid grid-cols-5 gap-2 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-8">
                   <div className="text-center bg-slate-50 rounded py-2"><FileText className="w-4 h-4 text-blue-500 mx-auto mb-1"/><p className="text-[16px] font-bold text-slate-800 leading-none">{pCount}</p><p className="text-[8px] text-slate-500 mt-1">Papers analyzed</p></div>
                   <div className="text-center bg-slate-50 rounded py-2"><span className="font-serif font-bold text-[16px] text-blue-500 leading-none mb-1 block">"</span><p className="text-[16px] font-bold text-slate-800 leading-none">{cCount}</p><p className="text-[8px] text-slate-500 mt-1">Claims extracted</p></div>
                   <div className="text-center bg-slate-50 rounded py-2"><LogoIcon className="w-4 h-4 text-blue-500 mx-auto mb-1"/><p className="text-[16px] font-bold text-slate-800 leading-none">{rCount}</p><p className="text-[8px] text-slate-500 mt-1">Claim relationships</p></div>
@@ -366,7 +351,7 @@ export default function Export() {
                 <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent"></div>
               </div>
 
-              <div className="flex gap-4 mt-2">
+              <div className="flex flex-col md:flex-row gap-4 mt-2">
                 <div className="flex-1 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <Info className="w-4 h-4 text-blue-500"/> <h3 className="font-bold text-[13px] text-slate-800">Report Information</h3>
@@ -392,9 +377,7 @@ export default function Export() {
 
             </div>
           </div>
-        </div>
-
-      </div>
+        </main>
     </div>
   );
 }

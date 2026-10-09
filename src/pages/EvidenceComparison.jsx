@@ -19,22 +19,11 @@ const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
 );
 
 export default function EvidenceComparison() {
-  const [scale, setScale] = useState(1);
   const { analysisId, relationshipId } = useParams();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const updateScale = () => {
-      const scaleX = window.innerWidth / 1440;
-      setScale(scaleX > 1 ? 1 : scaleX);
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -86,14 +75,10 @@ export default function EvidenceComparison() {
   };
 
   return (
-    <div className="w-full bg-[#f8fafc] overflow-x-hidden flex justify-center font-sans" style={{ minHeight: '100vh', height: `${1000 * scale}px` }}>
-      <div 
-        className="relative bg-[#f8fafc] shrink-0 origin-top" 
-        style={{ width: '1440px', height: '1000px', transform: `scale(${scale})` }}
-      >
-        {/* Navbar */}
-        <nav className="absolute top-0 left-0 w-full h-[80px] flex items-center justify-between px-[60px] z-50 border-b border-slate-200/50 bg-white">
-          <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+    <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col overflow-x-hidden">
+      {/* Navbar */}
+      <nav className="sticky top-0 w-full h-[80px] flex items-center justify-between px-6 lg:px-[60px] z-50 border-b border-slate-200/50 bg-white">
+        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
             <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
           </Link>
@@ -119,11 +104,11 @@ export default function EvidenceComparison() {
         </nav>
 
         {/* Main Content Area */}
-        <div className="absolute left-[60px] top-[120px] w-[1320px] flex flex-col">
+        <main className="w-full max-w-[1440px] mx-auto px-6 lg:px-[60px] py-10 flex flex-col flex-1">
           
-          <div className="flex justify-between items-start mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
             <div>
-              <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2 flex-wrap">
                  Workspace <ChevronRight className="w-3 h-3"/> Analysis Results <ChevronRight className="w-3 h-3"/> Evidence Comparison
               </div>
               <h1 className="text-[32px] font-serif text-[#0f2a24] leading-none tracking-tight">
@@ -149,12 +134,12 @@ export default function EvidenceComparison() {
             </div>
           </div>
 
-          <div className="flex gap-8">
+          <div className="flex flex-col lg:flex-row gap-8">
             
             {/* Side-by-Side Comparison */}
-            <div className="flex-[2] flex gap-4">
+            <div className="flex-[2] flex flex-col md:flex-row gap-4">
                {/* Paper A */}
-               <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col">
+               <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col min-w-0">
                  <div className="flex items-start gap-3 mb-6 border-b border-slate-100 pb-4">
                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><FileText className="w-5 h-5"/></div>
                    <div>
@@ -192,19 +177,21 @@ export default function EvidenceComparison() {
                </div>
 
                {/* Center Relationship Indicator */}
-               <div className="w-16 shrink-0 flex flex-col items-center pt-[150px]">
-                 <div className={`w-12 h-12 bg-white border rounded-full flex items-center justify-center shadow-sm z-10 ${isContradiction ? 'border-red-200 text-red-500' : isSupporting ? 'border-emerald-200 text-emerald-500' : 'border-slate-200 text-slate-500'}`}>
+               <div className="md:w-16 shrink-0 flex md:flex-col items-center justify-center md:pt-[150px] relative py-4 md:py-0">
+                 <div className={`hidden md:block w-[1px] h-20 absolute top-[180px] -z-10 ${isContradiction ? 'bg-red-200' : isSupporting ? 'bg-emerald-200' : 'bg-slate-200'}`}></div>
+                 <div className={`w-12 h-12 bg-white border rounded-full flex items-center justify-center shadow-sm z-10 relative ${isContradiction ? 'border-red-200 text-red-500' : isSupporting ? 'border-emerald-200 text-emerald-500' : 'border-slate-200 text-slate-500'}`}>
                    {isContradiction ? <AlertTriangle className="w-5 h-5"/> : isSupporting ? <CheckCircle2 className="w-5 h-5"/> : <LogoIcon className="w-5 h-5"/>}
                  </div>
-                 <div className={`w-[1px] h-20 -mt-2 ${isContradiction ? 'bg-red-200' : isSupporting ? 'bg-emerald-200' : 'bg-slate-200'}`}></div>
-                 <div className={`${isContradiction ? 'bg-red-50 border-red-100 text-red-700' : isSupporting ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-slate-50 border-slate-100 text-slate-700'} border text-[10px] font-bold px-2 py-1 rounded text-center -mt-2 z-10`}>
-                   {isContradiction ? <>Potential<br/>Contradiction</> : isSupporting ? <>Supporting<br/>Evidence</> : <>Neutral</>}
+                 <div className={`md:hidden absolute w-full h-[1px] left-0 top-1/2 -z-10 ${isContradiction ? 'bg-red-200' : isSupporting ? 'bg-emerald-200' : 'bg-slate-200'}`}></div>
+                 
+                 <div className={`${isContradiction ? 'bg-red-50 border-red-100 text-red-700' : isSupporting ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-slate-50 border-slate-100 text-slate-700'} border text-[10px] font-bold px-2 py-1 rounded text-center md:-mt-2 z-10 bg-white ml-2 md:ml-0`}>
+                   {isContradiction ? <>Potential<br className="hidden md:block"/>Contradiction</> : isSupporting ? <>Supporting<br className="hidden md:block"/>Evidence</> : <>Neutral</>}
                  </div>
-                 <div className="text-[10px] font-bold text-slate-400 mt-2">{rel.confidence}%</div>
+                 <div className="text-[10px] font-bold text-slate-400 md:mt-2 ml-2 md:ml-0">{rel.confidence}%</div>
                </div>
 
                {/* Paper B */}
-               <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col opacity-95">
+               <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col opacity-95 min-w-0">
                  <div className="flex items-start gap-3 mb-6 border-b border-slate-100 pb-4">
                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><FileText className="w-5 h-5"/></div>
                    <div>
@@ -303,9 +290,8 @@ export default function EvidenceComparison() {
             </div>
 
           </div>
-        </div>
+        </main>
 
-      </div>
     </div>
   );
 }

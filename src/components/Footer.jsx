@@ -59,9 +59,9 @@ export default function Footer() {
       <div className="max-w-[1200px] mx-auto mt-8 pt-6 border-t border-slate-700/50 text-[12px] text-slate-500 flex flex-col md:flex-row justify-between items-center">
         <p>&copy; {new Date().getFullYear()} SciTrace AI. All rights reserved.</p>
         <div className="flex gap-4 mt-4 md:mt-0">
-          <a href="#" className="hover:text-white transition-colors">Twitter</a>
-          <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
-          <a href="#" className="hover:text-white transition-colors">GitHub</a>
+          <a href="https://twitter.com/bishalstha045" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</a>
+          <a href="https://linkedin.com/in/bishalstha045" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">LinkedIn</a>
+          <a href="https://github.com/bishalstha045" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
         </div>
       </div>
     </footer>
