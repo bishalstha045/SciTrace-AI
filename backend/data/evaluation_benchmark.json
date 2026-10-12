@@ -1,0 +1,252 @@
+[
+  {
+    "id": "bench_001",
+    "category": "direct_contradiction",
+    "ground_truth": "contradiction",
+    "claim_a": "High atmospheric CO2 concentrations significantly reduce calcification rates in marine calcifiers.",
+    "claim_b": "Elevated atmospheric CO2 does not decrease calcification rates in marine calcifiers.",
+    "labelling_rationale": "Direct diametrical opposition on the effect of CO2 on marine calcification rates.",
+    "source_info": "Illustrative scientific benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_002",
+    "category": "direct_contradiction",
+    "ground_truth": "contradiction",
+    "claim_a": "Dietary sodium restriction significantly lowers systolic blood pressure in hypertensive patients.",
+    "claim_b": "Dietary sodium restriction fails to reduce systolic blood pressure in hypertensive patients.",
+    "labelling_rationale": "Direct contradictory conclusions regarding the efficacy of sodium reduction on systolic BP.",
+    "source_info": "Illustrative clinical benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_003",
+    "category": "direct_contradiction",
+    "ground_truth": "contradiction",
+    "claim_a": "Microplastic ingestion impairs larval growth and increases mortality in Danio rerio.",
+    "claim_b": "Microplastic exposure does not affect larval development or survival in Danio rerio.",
+    "labelling_rationale": "Mutually exclusive experimental outcomes on larval development in the same model organism.",
+    "source_info": "Illustrative ecotoxicology benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_004",
+    "category": "direct_contradiction",
+    "ground_truth": "contradiction",
+    "claim_a": "Administration of remdesivir significantly shortens time to clinical recovery in hospitalized COVID-19 patients.",
+    "claim_b": "Remdesivir treatment confers no statistically significant reduction in recovery time among hospitalized patients.",
+    "labelling_rationale": "Directly opposing clinical trial efficacy outcomes for the same therapeutic agent.",
+    "source_info": "Clinical trial literature comparison (ACTT-1 vs WHO Solidarity Trial)",
+    "is_illustrative": false
+  },
+  {
+    "id": "bench_005",
+    "category": "direct_contradiction",
+    "ground_truth": "contradiction",
+    "claim_a": "The global mean surface temperature increased by 1.1 degrees Celsius above pre-industrial baselines.",
+    "claim_b": "Global surface temperature increases have not exceeded 0.2 degrees Celsius relative to pre-industrial baselines.",
+    "labelling_rationale": "Direct numerical contradiction regarding global temperature anomaly magnitudes.",
+    "source_info": "Climatology benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_006",
+    "category": "direct_contradiction",
+    "ground_truth": "contradiction",
+    "claim_a": "Graphene oxide membranes completely block monovalent ion permeation in water desalination.",
+    "claim_b": "Graphene oxide membranes allow substantial passage of monovalent ions across all hydrostatic pressures.",
+    "labelling_rationale": "Direct contradiction between complete exclusion versus substantial permeation.",
+    "source_info": "Materials science benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_007",
+    "category": "supporting_entailment",
+    "ground_truth": "supporting",
+    "claim_a": "Rising ocean temperatures directly accelerate coral bleaching severity across tropical reefs.",
+    "claim_b": "Higher sea surface temperatures are significantly associated with accelerated coral bleaching events.",
+    "labelling_rationale": "Mutual entailment and corroborating assertions linking thermal stress to coral bleaching.",
+    "source_info": "Marine ecology literature synthesis",
+    "is_illustrative": false
+  },
+  {
+    "id": "bench_008",
+    "category": "supporting_entailment",
+    "ground_truth": "supporting",
+    "claim_a": "Regular aerobic exercise reduces serum LDL cholesterol in adults with hyperlipidemia.",
+    "claim_b": "Physical aerobic activity leads to decreased levels of low-density lipoprotein cholesterol in adults.",
+    "labelling_rationale": "Paraphrased corroboration asserting the lipid-lowering benefit of aerobic exercise.",
+    "source_info": "Cardiovascular medicine benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_009",
+    "category": "supporting_entailment",
+    "ground_truth": "supporting",
+    "claim_a": "CRISPR-Cas9 gene editing produces targeted deletions in human embryonic stem cells.",
+    "claim_b": "Cas9 ribonucleoprotein complexes achieve precise genomic knockouts in human pluripotent stem cells.",
+    "labelling_rationale": "Entailment between general and specific formulations of Cas9-mediated gene knockout.",
+    "source_info": "Molecular biology literature comparison",
+    "is_illustrative": false
+  },
+  {
+    "id": "bench_010",
+    "category": "supporting_entailment",
+    "ground_truth": "supporting",
+    "claim_a": "Tau protein hyperphosphorylation correlates with synaptic loss in early-stage Alzheimer disease.",
+    "claim_b": "Increased levels of hyperphosphorylated tau are strongly linked to synaptic density reduction in Alzheimer patients.",
+    "labelling_rationale": "Corroborating clinical neuropathology assertions with concordant directional findings.",
+    "source_info": "Neuroscience literature comparison",
+    "is_illustrative": false
+  },
+  {
+    "id": "bench_011",
+    "category": "supporting_entailment",
+    "ground_truth": "supporting",
+    "claim_a": "Perovskite-silicon tandem solar cells achieved a power conversion efficiency exceeding 30 percent.",
+    "claim_b": "Tandem photovoltaic devices combining perovskite top cells with silicon subcells demonstrated efficiencies above 30 percent.",
+    "labelling_rationale": "Identical empirical efficiency thresholds reported across technical formulations.",
+    "source_info": "Photovoltaic engineering benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_012",
+    "category": "supporting_entailment",
+    "ground_truth": "supporting",
+    "claim_a": "Loss of biodiversity reduces ecosystem stability and biomass production in temperate grasslands.",
+    "claim_b": "Decreased plant species richness leads to lower annual aboveground biomass and heightened ecosystem vulnerability.",
+    "labelling_rationale": "Corroborating ecological findings regarding the diversity-stability hypothesis.",
+    "source_info": "Ecology literature comparison (Cedar Creek synthesis)",
+    "is_illustrative": false
+  },
+  {
+    "id": "bench_013",
+    "category": "neutral_unrelated",
+    "ground_truth": "neutral",
+    "claim_a": "Ocean acidification reduces shell thickness in Antarctic pteropods.",
+    "claim_b": "Machine learning algorithms optimize hyperparameter tuning in deep neural networks.",
+    "labelling_rationale": "Completely unrelated domains (marine biology vs computational computer science).",
+    "source_info": "Cross-domain divergence benchmark",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_014",
+    "category": "neutral_unrelated",
+    "ground_truth": "neutral",
+    "claim_a": "Intermittent fasting improves insulin sensitivity in diabetic mice.",
+    "claim_b": "Lithium-ion battery cathode degradation increases under elevated thermal cycling.",
+    "labelling_rationale": "Unrelated scientific disciplines (metabolic endocrinology vs energy storage).",
+    "source_info": "Cross-domain divergence benchmark",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_015",
+    "category": "neutral_unrelated",
+    "ground_truth": "neutral",
+    "claim_a": "Arctic sea ice extent reached an unprecedented minimum during September.",
+    "claim_b": "Quantum dot solar cells exhibit high external quantum efficiency in the infrared spectrum.",
+    "labelling_rationale": "Unrelated physical phenomena (polar glaciology vs quantum nanophotonics).",
+    "source_info": "Cross-domain divergence benchmark",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_016",
+    "category": "population_difference",
+    "ground_truth": "neutral",
+    "claim_a": "Metformin administration significantly reduced fasting blood glucose in adult human type 2 diabetes patients.",
+    "claim_b": "Metformin treatment produced no significant alteration in blood glucose levels in wild-type adolescent mice on normal chow.",
+    "labelling_rationale": "Claims apply to distinct cohorts (diabetic adult humans vs normoglycemic healthy adolescent rodents); not a true contradiction.",
+    "source_info": "Translational pharmacology benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_017",
+    "category": "population_difference",
+    "ground_truth": "neutral",
+    "claim_a": "Statin therapy decreased cardiovascular event incidence in elderly patients over 75 years of age.",
+    "claim_b": "Statin therapy demonstrated no statistically significant mortality reduction in healthy young adults under 30.",
+    "labelling_rationale": "Different demographic age brackets and baseline risk profiles explain divergent outcomes.",
+    "source_info": "Clinical epidemiology benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_018",
+    "category": "methodology_difference",
+    "ground_truth": "neutral",
+    "claim_a": "Oral antibiotic therapy cured acute bacterial sinusitis within five days in outpatient adults.",
+    "claim_b": "Topical antibiotic irrigation failed to eradicate recalcitrant chronic sinusitis biofilms in post-surgical patients.",
+    "labelling_rationale": "Different administration routes (systemic oral vs topical irrigation) and conditions (acute vs biofilm-associated chronic).",
+    "source_info": "Otolaryngology benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_019",
+    "category": "methodology_difference",
+    "ground_truth": "neutral",
+    "claim_a": "Compound K exhibited potent nanomolar cytotoxicity against glioblastoma cells in monolayer 2D culture.",
+    "claim_b": "Compound K failed to induce apoptosis in glioblastoma cells grown in 3D spheroid extracellular matrix models.",
+    "labelling_rationale": "Dimensional culture model divergence (2D monolayer vs 3D spheroid) commonly accounts for differential drug penetration and resistance.",
+    "source_info": "Oncology cell biology benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_020",
+    "category": "uncertainty_and_hedging",
+    "ground_truth": "neutral",
+    "claim_a": "Vitamin D supplementation may slightly reduce respiratory infection risk in severely deficient individuals.",
+    "claim_b": "Vitamin D supplementation has no observed therapeutic effect on respiratory tract infection incidence in healthy adults.",
+    "labelling_rationale": "Hedging language ('may slightly reduce') in deficient subset is compatible with null effect in healthy population.",
+    "source_info": "Nutritional science literature comparison",
+    "is_illustrative": false
+  },
+  {
+    "id": "bench_021",
+    "category": "apparent_contradiction_explained_by_conditions",
+    "ground_truth": "neutral",
+    "claim_a": "Thermal acclimation at 28 degrees Celsius increased photosynthetic efficiency in Symbiodiniaceae.",
+    "claim_b": "Acute heat shock at 34 degrees Celsius triggered severe photochemical inhibition in Symbiodiniaceae.",
+    "labelling_rationale": "Different temperature regimes and exposure kinetics (gradual acclimation at moderate heat vs acute lethal thermal shock).",
+    "source_info": "Coral photobiology benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_022",
+    "category": "numerical_difference",
+    "ground_truth": "contradiction",
+    "claim_a": "The enzymatic reaction velocity was measured at 120 micromoles per minute per milligram.",
+    "claim_b": "The enzymatic reaction velocity did not exceed 12 micromoles per minute per milligram under identical conditions.",
+    "labelling_rationale": "Ten-fold discrepancy in quantitative kinetics under identical conditions constitutes a contradiction.",
+    "source_info": "Biochemistry kinetics benchmark case",
+    "is_illustrative": true
+  },
+  {
+    "id": "bench_023",
+    "category": "negation_and_conflict",
+    "ground_truth": "contradiction",
+    "claim_a": "Inhibition of CDK4/6 induces robust cellular senescence in retinoblastoma-positive breast cancer cells.",
+    "claim_b": "CDK4/6 inhibition is completely unable to trigger senescence in retinoblastoma-positive breast cancer cells.",
+    "labelling_rationale": "Explicit negation ('induces robust senescence' vs 'completely unable to trigger senescence').",
+    "source_info": "Cancer biology literature comparison",
+    "is_illustrative": false
+  },
+  {
+    "id": "bench_024",
+    "category": "apparent_contradiction_explained_by_conditions",
+    "ground_truth": "neutral",
+    "claim_a": "Aspirin administration reduced thromboxane B2 levels by 95 percent after single acute oral dosing.",
+    "claim_b": "Aspirin showed attenuated platelet inhibition in patients co-administered ibuprofen two hours prior.",
+    "labelling_rationale": "Drug-drug interaction (competitive COX-1 active site binding by ibuprofen) explains attenuated inhibition.",
+    "source_info": "Cardiovascular pharmacology literature comparison (Catella-Lawson et al.)",
+    "is_illustrative": false
+  },
+  {
+    "id": "bench_025",
+    "category": "supporting_entailment",
+    "ground_truth": "supporting",
+    "claim_a": "Anthropogenic nitrogen deposition increases soil acidification across temperate forest biomes.",
+    "claim_b": "Atmospheric reactive nitrogen inputs lead to significant reductions in forest soil pH values.",
+    "labelling_rationale": "Corroborating geochemical assertions (soil acidification is definitionally reduction in pH).",
+    "source_info": "Biogeochemistry literature synthesis",
+    "is_illustrative": false
+  }
+]
