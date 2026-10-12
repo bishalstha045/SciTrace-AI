@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UploadCloud, FileText, X, ChevronRight, Search, Play, HelpCircle, ArrowRight } from 'lucide-react';
+import { UploadCloud, FileText, X, ChevronRight, HelpCircle, ArrowRight } from 'lucide-react';
 import { mockAnalysisService } from '../services/mockAnalysisService';
+import { analysisApi } from '../services/api';
 import ProfileMenu from '../components/ProfileMenu';
 
 const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
@@ -19,22 +20,49 @@ const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
 );
 
 export default function UploadPapers() {
-  const [scale, setScale] = useState(1);
+  const [analysisTitle, setAnalysisTitle] = useState('');
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const updateScale = () => {
-      const scaleX = window.innerWidth / 1440;
-      setScale(scaleX > 1 ? 1 : scaleX);
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
+  const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+
+  const validateAndFilterFiles = (incomingFiles) => {
+    const valid = [];
+    const errors = [];
+
+    for (const file of incomingFiles) {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      if (!isPdf) {
+        errors.push(`'${file.name}' is not a valid PDF.`);
+        continue;
+      }
+      if (file.size === 0) {
+        errors.push(`'${file.name}' is empty (0 bytes).`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        errors.push(`'${file.name}' exceeds the 50MB size limit (${(file.size / (1024 * 1024)).toFixed(1)}MB).`);
+        continue;
+      }
+      // Check if already in file list
+      if (files.some(f => f.name === file.name && f.size === file.size)) {
+        errors.push(`'${file.name}' has already been added.`);
+        continue;
+      }
+      valid.push(file);
+    }
+
+    if (errors.length > 0) {
+      setError(errors.join(' '));
+    } else {
+      setError('');
+    }
+
+    return valid;
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -48,14 +76,9 @@ export default function UploadPapers() {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    setError('');
     
     const droppedFiles = Array.from(e.dataTransfer.files);
-    const validPdfs = droppedFiles.filter(file => file.type === 'application/pdf' || file.name.endsWith('.pdf'));
-    
-    if (validPdfs.length !== droppedFiles.length) {
-      setError('Some files were rejected. Only PDF files are supported.');
-    }
+    const validPdfs = validateAndFilterFiles(droppedFiles);
     
     if (validPdfs.length > 0) {
       setFiles(prev => [...prev, ...validPdfs]);
@@ -63,17 +86,14 @@ export default function UploadPapers() {
   };
 
   const handleFileInput = (e) => {
-    setError('');
     const selectedFiles = Array.from(e.target.files);
-    const validPdfs = selectedFiles.filter(file => file.type === 'application/pdf' || file.name.endsWith('.pdf'));
-    
-    if (validPdfs.length !== selectedFiles.length) {
-      setError('Some files were rejected. Only PDF files are supported.');
-    }
+    const validPdfs = validateAndFilterFiles(selectedFiles);
     
     if (validPdfs.length > 0) {
       setFiles(prev => [...prev, ...validPdfs]);
     }
+    // Reset file input so user can re-select same file if deleted
+    e.target.value = '';
   };
 
   const removeFile = (indexToRemove) => {
@@ -81,71 +101,107 @@ export default function UploadPapers() {
   };
 
   const handleAnalyze = async () => {
+    if (isUploading) return; // Prevent duplicate clicks
     if (files.length < 2) {
-      setError('Please upload at least 2 papers to perform an analysis.');
+      setError('Please upload at least 2 papers to perform a comparative analysis.');
       return;
     }
     setError('');
     setIsUploading(true);
     
     try {
-      const analysis = await mockAnalysisService.createAnalysis(files);
-      navigate(`/analysis/${analysis.id}/progress`);
-    } catch (error) {
-      console.error("Failed to create analysis:", error);
+      const defaultTitle = files.length > 0
+        ? `Comparative Analysis: ${files[0].name.replace(/\.pdf$/i, '')} vs ${files[1] ? files[1].name.replace(/\.pdf$/i, '') : 'Research'}`
+        : 'Comparative Research Analysis';
+      const titleToUse = analysisTitle.trim() || defaultTitle;
+
+      const res = await analysisApi.createAnalysis(files, titleToUse);
+      if (res.success && res.data) {
+        navigate(`/analysis/${res.data.id}/progress`);
+      } else {
+        setError(res.error || 'Failed to initialize analysis pipeline.');
+        setIsUploading(false);
+      }
+    } catch (err) {
+      console.error("Failed to create analysis:", err);
+      setError(err.message || 'An unexpected error occurred while uploading.');
       setIsUploading(false);
     }
   };
 
-  return (
-    <div className="w-full bg-[#f8fafc] overflow-x-hidden flex justify-center font-sans" style={{ minHeight: '100vh', height: `${1000 * scale}px` }}>
-      <div 
-        className="relative bg-[#f8fafc] shrink-0 origin-top" 
-        style={{ width: '1440px', height: '1000px', transform: `scale(${scale})` }}
-      >
-        {/* Navbar */}
-        <nav className="absolute top-0 left-0 w-full h-[80px] flex items-center justify-between px-[60px] z-50 border-b border-slate-200/50 bg-white">
-          <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
-            <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
-          </Link>
 
-          <div className="flex items-center gap-10">
+  return (
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] font-sans">
+      {/* Navbar */}
+      <nav className="w-full bg-white px-6 sm:px-10 py-4 flex items-center justify-between border-b border-slate-200/50 z-50">
+        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <LogoIcon className="w-7 h-7 text-emerald-500" strokeWidth={2} />
+          <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-10">
             <div className="relative h-full flex items-center">
               <Link to="/analyses" className="text-slate-900 font-semibold text-[14px] cursor-pointer pt-7 pb-7">Workspace</Link>
               <div className="absolute bottom-0 left-0 w-full h-[2px] bg-slate-900 rounded-t-full"></div>
             </div>
             <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Analyses</Link>
-            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
+            <Link to="/papers" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
             <Link to="/" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Help</Link>
           </div>
 
-          <div className="flex items-center gap-6">
-            <Link to="/analyses" title="Search Analyses" className="text-slate-400 hover:text-slate-600">
-              <Search className="w-5 h-5" strokeWidth={2} />
-            </Link>
-            <ProfileMenu />
-          </div>
-        </nav>
+        <div className="flex items-center gap-4 sm:gap-6">
+          <ProfileMenu />
+        </div>
+      </nav>
 
-        {/* Main Content Area */}
-        <div className="absolute left-[60px] top-[120px] w-[1320px] flex gap-10">
+      {/* Main Content Area */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 sm:px-10 py-8 flex flex-col lg:flex-row gap-10">
           
           {/* Left Column - Upload Area */}
           <div className="flex-[2] flex flex-col">
             <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-               Workspace <ChevronRight className="w-3 h-3"/> New Analysis
+               <Link to="/analyses" className="hover:text-emerald-500 transition-colors">Workspace</Link> <ChevronRight className="w-3 h-3"/> New Analysis
             </div>
             <h1 className="text-[40px] font-serif text-[#0f2a24] leading-none mb-3 tracking-tight">
               Upload Papers
             </h1>
-            <p className="text-[16px] text-slate-500 mb-8">
+            <p className="text-[16px] text-slate-500 mb-6">
               Upload at least 2 scientific research papers in PDF format to discover relationships between their claims.
             </p>
+
+            {/* AI Contradiction Engine Active Notice */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-6 flex items-start gap-3 text-[12px] text-emerald-800">
+              <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[10px] uppercase shrink-0 mt-0.5">Live AI Engine</span>
+              <p className="leading-relaxed">
+                Multi-file PDF ingestion, text extraction (PyMuPDF), candidate claim discovery, semantic similarity (all-MiniLM-L6-v2), and NLI contradiction classification (BART-large-MNLI) are active.
+              </p>
+            </div>
+
+            {/* Analysis Title / Research Topic Input */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 shadow-sm">
+              <div className="flex justify-between items-center mb-2">
+                <label htmlFor="analysis-title-input" className="text-[13px] font-bold text-slate-800">
+                  Analysis Name / Research Topic
+                </label>
+                <span className="text-[11px] text-slate-400">Recorded in your Workspace history</span>
+              </div>
+              <input
+                id="analysis-title-input"
+                type="text"
+                value={analysisTitle}
+                onChange={(e) => setAnalysisTitle(e.target.value)}
+                placeholder="e.g., Comparative Study on Microplastics in Marine Life"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all bg-slate-50/50"
+              />
+              <p className="text-[11px] text-slate-500 mt-2">
+                Specify what you are analyzing so you can easily identify this investigation in your analysis reports and history.
+              </p>
+            </div>
 
             {/* Drag and Drop Zone */}
             <div 
               className={`border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
+
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -193,7 +249,11 @@ export default function UploadPapers() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Ready</span>
-                        <button onClick={() => removeFile(idx)} className="p-1.5 text-slate-400 hover:text-red-500 rounded transition-colors opacity-0 group-hover:opacity-100">
+                        <button 
+                          onClick={() => removeFile(idx)} 
+                          className="p-1.5 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer"
+                          title="Remove file"
+                        >
                           <X className="w-4 h-4"/>
                         </button>
                       </div>
@@ -254,9 +314,7 @@ export default function UploadPapers() {
 
           </div>
 
-        </div>
-
-      </div>
+        </main>
     </div>
   );
 }

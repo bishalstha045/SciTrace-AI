@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, ChevronDown, CheckCircle2, FileText, AlertTriangle, RefreshCw, LayoutGrid, List, Plus, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Search, ChevronRight, ChevronDown, CheckCircle2, FileText, AlertTriangle, RefreshCw, LayoutGrid, List, Plus, Trash2 } from 'lucide-react';
 import { mockAnalysisService } from '../services/mockAnalysisService';
+import { analysisApi } from '../services/api';
+import { getAnalysisStats } from '../utils/analysisStats';
 import ProfileMenu from '../components/ProfileMenu';
 
 const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
@@ -19,7 +21,6 @@ const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
 );
 
 export default function Analyses() {
-  const [scale, setScale] = useState(1);
   const [analyses, setAnalyses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -28,32 +29,40 @@ export default function Analyses() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const updateScale = () => {
-      const scaleX = window.innerWidth / 1440;
-      setScale(scaleX > 1 ? 1 : scaleX);
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
-
-  useEffect(() => {
     const fetchAnalyses = async () => {
-      const all = await mockAnalysisService.getAllAnalyses();
-      setAnalyses(all);
+      try {
+        const res = await analysisApi.getAnalyses();
+        let all = (res.success && res.data) ? res.data : [];
+        const demoRes = analysisApi.getDemoAnalysis();
+        const demo = demoRes.data || (await mockAnalysisService.getAnalysisById('demo-analysis'));
+        if (demo && !all.find(a => a.id === demo.id)) {
+          all = [...all, demo];
+        }
+        setAnalyses(all);
+      } catch (e) {
+        console.error("Failed to load analyses:", e);
+      }
     };
     fetchAnalyses();
   }, []);
 
   const handleDelete = async (id) => {
+    if (id === 'demo-analysis') {
+      alert("Demonstration analysis is protected and cannot be deleted.");
+      return;
+    }
     if (window.confirm("Are you sure you want to delete this analysis?")) {
-      await mockAnalysisService.deleteAnalysis(id);
-      setAnalyses(prev => prev.filter(a => a.id !== id));
+      const res = await analysisApi.deleteAnalysis(id);
+      if (res.success) {
+        setAnalyses(prev => prev.filter(a => a.id !== id));
+      } else {
+        alert(res.error || "Failed to delete analysis.");
+      }
     }
   };
 
   const handleRetry = async (id) => {
-    await mockAnalysisService.retryAnalysis(id);
+    await analysisApi.retryAnalysis(id);
     navigate(`/analysis/${id}/progress`);
   };
 
@@ -76,57 +85,51 @@ export default function Analyses() {
   const totalRelationships = analyses.reduce((acc, a) => acc + (a.relationships?.length || 0), 0);
 
   return (
-    <div className="w-full bg-[#f8fafc] overflow-x-hidden flex justify-center font-sans" style={{ minHeight: '100vh', height: `${1000 * scale}px` }}>
-      <div 
-        className="relative bg-[#f8fafc] shrink-0 origin-top" 
-        style={{ width: '1440px', height: '1000px', transform: `scale(${scale})` }}
-      >
-        {/* Navbar */}
-        <nav className="absolute top-0 left-0 w-full h-[80px] flex items-center justify-between px-[60px] z-50 border-b border-slate-200/50 bg-white">
-          <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
-            <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] font-sans">
+      {/* Navbar */}
+      <nav className="w-full bg-white px-6 sm:px-10 py-4 flex items-center justify-between border-b border-slate-200/50 z-50">
+        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <LogoIcon className="w-7 h-7 text-emerald-500" strokeWidth={2} />
+          <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-10">
+          <Link 
+            to="/analyses" 
+            onClick={() => {
+              setSearchQuery("");
+              setStatusFilter("all");
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors"
+          >
+            Workspace
           </Link>
-
-          <div className="flex items-center gap-10">
-            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Workspace</Link>
-            <div className="relative h-full flex items-center">
-              <Link to="/analyses" className="text-slate-900 font-semibold text-[14px] cursor-pointer pt-7 pb-7">Analyses</Link>
-              <div className="absolute bottom-0 left-0 w-full h-[2px] bg-slate-900 rounded-t-full"></div>
-            </div>
-            <Link to="/papers" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
+          <div className="relative h-full flex items-center">
+            <Link to="/analyses" className="text-slate-900 font-semibold text-[14px] cursor-pointer pt-2 pb-2">Analyses</Link>
+            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-slate-900 rounded-t-full"></div>
           </div>
-
-          <div className="flex items-center gap-6">
-            <button onClick={() => document.getElementById('search-input')?.focus()} title="Search Analyses" className="text-slate-400 hover:text-slate-600">
-              <Search className="w-5 h-5" strokeWidth={2} />
-            </button>
-            <Link to="/analysis/new" className="bg-[#0b1f1b] text-white px-5 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2">
-              <Plus className="w-4 h-4"/> New Analysis
-            </Link>
-            <ProfileMenu />
-          </div>
-        </nav>
-
-        {/* Faint Background Stack (Right) */}
-        <div className="absolute right-[-100px] top-[100px] w-[600px] h-[800px] z-0 pointer-events-none opacity-[0.25]">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute w-[800px] h-[600px] bg-white border-t border-l border-slate-300 shadow-[0_-2px_12px_rgba(0,0,0,0.02)] rounded-tl-lg" 
-              style={{ left: `${i * 15}px`, top: `${i * 30}px`, transform: `rotate(${-5 + i * 2}deg)` }}
-            >
-            </div>
-          ))}
+          <Link to="/papers" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
         </div>
 
-        {/* Main Content Area */}
-        <div className="absolute left-[60px] top-[120px] w-[1320px] z-10 flex flex-col">
-          
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link to="/analysis/demo-analysis/results" className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-50 flex items-center gap-2 hidden sm:flex">
+            <LayoutGrid className="w-4 h-4"/> Demo
+          </Link>
+          <Link to="/analysis/new" className="bg-[#0b1f1b] text-white px-5 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2 hidden sm:flex">
+            <Plus className="w-4 h-4"/> New Analysis
+          </Link>
+          <ProfileMenu />
+        </div>
+      </nav>
+
+      {/* Main Content Area */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 sm:px-10 py-8 flex flex-col relative z-10">
+
           <div className="flex justify-between items-start mb-8">
             <div>
               <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-                 Workspace <ChevronRight className="w-3 h-3"/> Analysis History
+                 <Link to="/analyses" className="hover:text-emerald-500 transition-colors">Workspace</Link> <ChevronRight className="w-3 h-3"/> Analysis History
               </div>
               <h1 className="text-[44px] font-serif text-[#0f2a24] leading-none mb-3 tracking-tight">
                 Analysis History
@@ -135,10 +138,11 @@ export default function Analyses() {
                 Review, reopen, and explore your previous research analyses.
               </p>
               
-              <div className="flex items-center gap-6 text-[14px] text-slate-600 font-medium">
+              <div className="flex flex-wrap items-center gap-6 text-[14px] text-slate-600 font-medium">
                 <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> <span className="font-bold text-slate-800">{analyses.length}</span> analyses</div>
                 <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> <span className="font-bold text-slate-800">{totalPapers}</span> papers analyzed</div>
                 <div className="flex items-center gap-2"><LogoIcon className="w-4 h-4"/> <span className="font-bold text-slate-800">{totalClaims}</span> claims extracted</div>
+                <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600"/> <span className="font-bold text-slate-800">{totalRelationships}</span> relationships</div>
               </div>
             </div>
 
@@ -237,23 +241,30 @@ export default function Analyses() {
             
             {filteredAnalyses.length === 0 ? (
                <div className="col-span-3 text-center py-20 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                 <p className="text-slate-500 font-medium">No analyses found. Create a new one to get started.</p>
-                 <Link to="/analysis/new" className="mt-4 inline-flex items-center gap-2 bg-[#0f2a24] text-white px-5 py-2 rounded-lg font-medium">
-                   <Plus className="w-4 h-4"/> New Analysis
-                 </Link>
+                 <h3 className="text-xl font-bold text-slate-800 mb-2">Welcome to your Workspace</h3>
+                 <p className="text-slate-500 font-medium mb-6">No analyses found. Create a new one or explore our interactive demo.</p>
+                 <div className="flex items-center justify-center gap-4">
+                   <Link to="/analysis/new" className="inline-flex items-center gap-2 bg-[#0f2a24] text-white px-6 py-2.5 rounded-xl font-medium hover:bg-slate-900 transition-colors shadow-sm">
+                     <Plus className="w-4 h-4"/> New Analysis
+                   </Link>
+                   <Link to="/analysis/demo-analysis/results" className="inline-flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-6 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition-colors shadow-sm">
+                     <LayoutGrid className="w-4 h-4"/> Explore Demo
+                   </Link>
+                 </div>
                </div>
             ) : (
               filteredAnalyses.map(analysis => {
                 const isCompleted = analysis.status === 'completed';
                 const isProcessing = analysis.status === 'processing';
 
-                const pCount = analysis.papers?.length || 0;
-                const cCount = analysis.claims?.length || 0;
-                const rCount = analysis.relationships?.length || 0;
+                const stats = getAnalysisStats(analysis);
+                const pCount = stats.paperCount;
+                const cCount = stats.totalClaims;
+                const rCount = stats.totalRelationships;
                 
-                const supporting = analysis.relationships?.filter(r => r.type === 'supporting').length || 0;
-                const contradictions = analysis.relationships?.filter(r => r.type === 'contradiction').length || 0;
-                const neutral = analysis.relationships?.filter(r => r.type === 'neutral' || r.type === 'related').length || 0;
+                const supporting = stats.supporting.length;
+                const contradictions = stats.contradictions.length;
+                const neutral = stats.neutral.length;
 
                 const supPct = rCount > 0 ? (supporting / rCount) * 100 : 0;
                 const conPct = rCount > 0 ? (contradictions / rCount) * 100 : 0;
@@ -343,9 +354,7 @@ export default function Analyses() {
             )}
 
           </div>
-        </div>
-
-      </div>
+      </main>
     </div>
   );
 }

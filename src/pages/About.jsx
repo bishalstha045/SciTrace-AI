@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Footer from '../components/Footer';
+import ProfileMenu from '../components/ProfileMenu';
 
 export default function About() {
   return (
@@ -7,7 +8,7 @@ export default function About() {
       {/* Navbar Minimal */}
       <nav className="w-full h-[80px] flex items-center justify-between px-12 bg-white border-b border-slate-200">
         <Link to="/" className="flex items-center gap-2.5">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-[#0f2a24]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-emerald-500">
             <circle cx="12" cy="12" r="1.5" />
             <circle cx="5" cy="5" r="1.5" />
             <circle cx="19" cy="5" r="1.5" />
@@ -20,7 +21,10 @@ export default function About() {
           </svg>
           <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
         </Link>
-        <Link to="/" className="text-slate-600 font-medium hover:text-slate-900 transition-colors text-[15px]">Back to Home</Link>
+        <div className="flex items-center gap-6">
+          <Link to="/" className="text-slate-600 font-medium hover:text-slate-900 transition-colors text-[15px]">Back to Home</Link>
+          {localStorage.getItem('isAuthenticated') === 'true' && <ProfileMenu />}
+        </div>
       </nav>
 
       <main className="flex-1 max-w-[800px] mx-auto py-16 px-6">

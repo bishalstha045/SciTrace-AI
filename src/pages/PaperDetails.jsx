@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Search, ChevronRight, ChevronLeft, Download, FileText, CheckCircle2, AlertTriangle, BookOpen, Share2, MoreVertical, ExternalLink, Activity, Info, Settings } from 'lucide-react';
+import { Search, ChevronRight, ChevronLeft, Download, FileText, CheckCircle2, AlertTriangle, BookOpen, Share2, MoreVertical, ExternalLink, Activity, Info, X } from 'lucide-react';
 import { mockAnalysisService } from '../services/mockAnalysisService';
+import { analysisApi } from '../services/api';
+import { getPaperStats } from '../utils/analysisStats';
 import ProfileMenu from '../components/ProfileMenu';
 
 const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
@@ -22,15 +24,35 @@ export default function PaperDetails() {
   const { analysisId, paperId } = useParams();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterClaimType, setFilterClaimType] = useState('all');
+  const [sortClaimsBy, setSortClaimsBy] = useState('page');
+  const [showModal, setShowModal] = useState(false);
+  const [showAllPages, setShowAllPages] = useState(false);
+  const [selectedPage, setSelectedPage] = useState('all');
 
   useEffect(() => {
     const fetchAnalysis = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const data = await mockAnalysisService.getAnalysisById(analysisId || 'demo-analysis');
-        setAnalysis(data);
+        const id = analysisId || 'demo-analysis';
+        const res = await analysisApi.getAnalysisById(id);
+        if (res.success && res.data) {
+          setAnalysis(res.data);
+        } else {
+          const data = await mockAnalysisService.getAnalysisById(id);
+          setAnalysis(data);
+        }
       } catch (err) {
         console.error(err);
+        try {
+          const fallback = await mockAnalysisService.getAnalysisById(analysisId || 'demo-analysis');
+          setAnalysis(fallback);
+        } catch {
+          setError(err.message || "Analysis not found");
+        }
       } finally {
         setLoading(false);
       }
@@ -38,32 +60,97 @@ export default function PaperDetails() {
     fetchAnalysis();
   }, [analysisId]);
 
-  if (loading) return <div className="p-10 text-center font-bold text-slate-500">Loading paper details...</div>;
-  if (!analysis) return <div className="p-10 text-center font-bold text-red-500">Analysis not found.</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center font-sans">
+        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-[15px] font-bold text-slate-700">Loading paper details...</p>
+      </div>
+    );
+  }
 
-  const targetPaperId = paperId || 'paper-A';
-  const paper = analysis.papers?.find(p => p.id === targetPaperId);
-  if (!paper) return <div className="p-10 text-center font-bold text-red-500">Paper not found.</div>;
+  if (error || !analysis) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center font-sans p-6">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full text-center shadow-sm">
+          <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-100">
+            <AlertTriangle className="w-7 h-7" />
+          </div>
+          <h2 className="text-[22px] font-serif font-bold text-slate-800 mb-2">Analysis Not Found</h2>
+          <p className="text-[13px] text-slate-500 mb-6 leading-relaxed">
+            The analysis record could not be loaded. You can view the demo results or go back to your workspace.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Link to="/analysis/demo-analysis/results" className="bg-[#0b1f1b] text-white py-2.5 rounded-xl font-bold text-[13px] hover:bg-slate-900 transition-colors">
+              Open Demo Analysis
+            </Link>
+            <Link to="/analyses" className="bg-white border border-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-[13px] hover:bg-slate-50 transition-colors">
+              Back to Workspace
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // Filter claims to this specific paper
-  const paperClaims = analysis.claims?.filter(c => c.paperId === targetPaperId) || [];
+  const targetPaperId = paperId || analysis.papers?.[0]?.id || 'paper-A';
+  const paperStats = getPaperStats(analysis, targetPaperId);
   
-  // Filter relationships that involve any claim from this paper
-  const paperRelationships = analysis.relationships?.filter(r => {
-    const sClaim = analysis.claims.find(c => c.id === r.sourceClaimId);
-    const tClaim = analysis.claims.find(c => c.id === r.targetClaimId);
-    return sClaim?.paperId === targetPaperId || tClaim?.paperId === targetPaperId;
-  }) || [];
+  if (!paperStats || !paperStats.paper) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center font-sans p-6">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full text-center shadow-sm">
+          <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-100">
+            <FileText className="w-7 h-7" />
+          </div>
+          <h2 className="text-[22px] font-serif font-bold text-slate-800 mb-2">Paper Not Found</h2>
+          <p className="text-[13px] text-slate-500 mb-6 leading-relaxed">
+            The paper ID "{targetPaperId}" was not found in this analysis.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Link to={`/analysis/${analysis.id}/results`} className="bg-[#0b1f1b] text-white py-2.5 rounded-xl font-bold text-[13px] hover:bg-slate-900 transition-colors">
+              Back to Analysis Results
+            </Link>
+            {analysis.papers?.[0] && (
+              <Link to={`/analysis/${analysis.id}/paper/${analysis.papers[0].id}`} className="bg-white border border-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-[13px] hover:bg-slate-50 transition-colors">
+                View First Paper ({analysis.papers[0].title.substring(0, 20)}...)
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const supportingCount = paperRelationships.filter(r => r.type === 'supporting').length;
-  const contradictionCount = paperRelationships.filter(r => r.type === 'contradiction').length;
-  const neutralCount = paperRelationships.filter(r => r.type === 'neutral' || r.type === 'related').length;
-
-  // Get distinct pages that have claims
-  const distinctPages = [...new Set(paperClaims.map(c => c.page))].sort((a,b)=>a-b);
+  const { paper, paperClaims, paperRelationships, supporting, contradictions, neutral, distinctPages } = paperStats;
+  const supportingCount = supporting.length;
+  const contradictionCount = contradictions.length;
+  const neutralCount = neutral.length;
 
   const getFilteredClaims = () => {
-    return paperClaims.filter(c => c.text.toLowerCase().includes(searchQuery.toLowerCase()));
+    let result = paperClaims.filter(c => c.text.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    if (selectedPage !== 'all') {
+      result = result.filter(c => c.page === selectedPage);
+    }
+
+    if (filterClaimType !== 'all') {
+      result = result.filter(c => {
+        const rels = paperRelationships.filter(r => r.sourceClaimId === c.id || r.targetClaimId === c.id);
+        if (filterClaimType === 'contradiction') return rels.some(r => r.type === 'contradiction');
+        if (filterClaimType === 'supporting') return rels.some(r => r.type === 'supporting');
+        if (filterClaimType === 'neutral') return rels.length === 0 || rels.every(r => r.type !== 'contradiction' && r.type !== 'supporting');
+        return true;
+      });
+    }
+
+    if (sortClaimsBy === 'page') {
+      result.sort((a, b) => a.page - b.page);
+    } else if (sortClaimsBy === 'length') {
+      result.sort((a, b) => b.text.length - a.text.length);
+    }
+
+    return result;
   };
 
   const filteredClaims = getFilteredClaims();
@@ -78,7 +165,7 @@ export default function PaperDetails() {
       {/* Navbar */}
       <nav className="sticky top-0 w-full h-[80px] flex items-center justify-between px-6 lg:px-[60px] z-50 border-b border-slate-200/50 bg-white">
         <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
+            <LogoIcon className="w-7 h-7 text-emerald-500" strokeWidth={2} />
             <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
           </Link>
 
@@ -88,13 +175,10 @@ export default function PaperDetails() {
               <div className="absolute bottom-0 left-0 w-full h-[2px] bg-slate-900 rounded-t-full"></div>
             </div>
             <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Analyses</Link>
-            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
+            <Link to="/papers" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
           </div>
 
           <div className="flex items-center gap-6">
-            <Link to="/analyses" title="Search Analyses" className="text-slate-400 hover:text-slate-600">
-              <Search className="w-5 h-5" strokeWidth={2} />
-            </Link>
             <Link to={`/analysis/${analysis.id}/results`} className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-50 flex items-center gap-2">
               <ChevronLeft className="w-4 h-4"/> Back to Results
             </Link>
@@ -109,8 +193,25 @@ export default function PaperDetails() {
         <main className="w-full max-w-[1440px] mx-auto px-6 lg:px-[60px] py-10 flex flex-col flex-1">
           
           <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2 flex-wrap">
-             Workspace <ChevronRight className="w-3 h-3"/> Analysis Results <ChevronRight className="w-3 h-3"/> Paper Details
+             <Link to="/analyses" className="hover:text-emerald-500 transition-colors">Workspace</Link> 
+             <ChevronRight className="w-3 h-3"/> 
+             <Link to={`/analysis/${analysis.id}/results`} className="hover:text-emerald-500 transition-colors">Analysis Results</Link> 
+             <ChevronRight className="w-3 h-3"/> 
+             <span className="text-slate-700 font-semibold">Paper Details</span>
           </div>
+
+          {/* Demonstration Notice */}
+          {(analysis.id === 'demo-analysis' || analysis.isDemo || analysis.isSimulation) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 flex items-center justify-between text-[12px] text-amber-800 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Info className="w-4 h-4 text-amber-600 shrink-0" />
+                <span><strong>Demonstration Mode:</strong> Extracted claims and statistics shown for this paper are simulated demo data.</span>
+              </div>
+              <Link to={`/analysis/${analysis.id}/results`} className="font-bold text-amber-900 hover:underline">
+                Back to Results &rarr;
+              </Link>
+            </div>
+          )}
 
           {/* Header Card */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start shadow-sm mb-6 gap-6">
@@ -152,9 +253,12 @@ export default function PaperDetails() {
                 <Link to={`/analysis/${analysis.id}/export`} className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium text-[13px] hover:bg-slate-50 flex items-center gap-2 shadow-sm">
                   <Download className="w-4 h-4"/> Export Paper Analysis
                 </Link>
-                <Link to={`/analysis/${analysis.id}/results`} className="bg-[#0b1f1b] text-white px-4 py-2 rounded-lg font-medium text-[13px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2">
+                <button 
+                  onClick={() => setShowModal(true)}
+                  className="bg-[#0b1f1b] text-white px-4 py-2 rounded-lg font-medium text-[13px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                >
                   <ExternalLink className="w-4 h-4"/> Open Paper
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -248,26 +352,48 @@ export default function PaperDetails() {
 
             {/* Relevant Pages Table */}
             <div className="flex-1 bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col">
-              <h3 className="font-bold text-[14px] text-slate-800 mb-3">Relevant Pages</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-[14px] text-slate-800">Relevant Pages</h3>
+                {selectedPage !== 'all' && (
+                  <button 
+                    onClick={() => setSelectedPage('all')}
+                    className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+                  >
+                    Clear page filter
+                  </button>
+                )}
+              </div>
               <div className="w-full bg-slate-50 border border-slate-100 rounded-lg overflow-hidden flex-1 flex flex-col">
-                <div className="grid grid-cols-3 px-4 py-2 border-b border-slate-200 text-[11px] font-bold text-slate-600 bg-white">
+                <div className="grid grid-cols-2 px-4 py-2 border-b border-slate-200 text-[11px] font-bold text-slate-600 bg-white">
                   <div>Page</div>
-                  <div>Claims</div>
+                  <div className="text-right">Claims</div>
                 </div>
-                <div className="flex-1 flex flex-col overflow-y-auto">
-                  {distinctPages.slice(0, 5).map((page, idx) => {
+                <div className="flex-1 flex flex-col overflow-y-auto max-h-[160px]">
+                  {(showAllPages ? distinctPages : distinctPages.slice(0, 5)).map((page, idx) => {
                     const claimsOnPage = paperClaims.filter(c => c.page === page).length;
+                    const isSelected = selectedPage === page;
                     return (
-                      <div key={idx} className={`grid grid-cols-3 px-4 py-2 text-[12px] text-slate-700 border-b border-slate-100 ${idx % 2 === 1 ? 'bg-white' : ''}`}>
-                        <div>{page}</div>
-                        <div>{claimsOnPage}</div>
-                      </div>
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedPage(isSelected ? 'all' : page)}
+                        className={`grid grid-cols-2 px-4 py-2 text-[12px] text-left transition-colors border-b border-slate-100 cursor-pointer ${
+                          isSelected ? 'bg-emerald-50 text-emerald-900 font-semibold' : idx % 2 === 1 ? 'bg-white text-slate-700 hover:bg-slate-50' : 'text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div>Page {page}</div>
+                        <div className="text-right">{claimsOnPage}</div>
+                      </button>
                     );
                   })}
                 </div>
-                <button className="w-full py-2 text-[11px] font-bold text-blue-600 bg-white hover:bg-slate-50 border-t border-slate-200 flex justify-center items-center gap-1">
-                  View All Pages &rarr;
-                </button>
+                {distinctPages.length > 5 && (
+                  <button 
+                    onClick={() => setShowAllPages(!showAllPages)}
+                    className="w-full py-2 text-[11px] font-bold text-emerald-600 bg-white hover:bg-slate-50 border-t border-slate-200 flex justify-center items-center gap-1 cursor-pointer"
+                  >
+                    {showAllPages ? 'Show Fewer Pages' : `View All ${distinctPages.length} Pages`} &rarr;
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -283,6 +409,14 @@ export default function PaperDetails() {
                     <h3 className="text-[18px] font-bold text-slate-800">Extracted Claims</h3>
                     <p className="text-[12px] text-slate-500">Scientific statements identified from this paper.</p>
                   </div>
+                  {(searchQuery || filterClaimType !== 'all' || selectedPage !== 'all') && (
+                    <button
+                      onClick={() => { setSearchQuery(''); setFilterClaimType('all'); setSelectedPage('all'); }}
+                      className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                    >
+                      Reset filters
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-3">
@@ -291,18 +425,38 @@ export default function PaperDetails() {
                     <input 
                       type="text" 
                       placeholder="Search claims in this paper..." 
-                      className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-[13px] outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-sm"
+                      className="w-full pl-9 pr-8 py-2 rounded-lg border border-slate-200 text-[13px] outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-sm"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                        title="Clear search"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
-                  <select className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] outline-none shadow-sm text-slate-700 font-medium">
-                    <option>All Claims</option>
+                  <select 
+                    className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] outline-none shadow-sm text-slate-700 font-medium cursor-pointer"
+                    value={filterClaimType}
+                    onChange={(e) => setFilterClaimType(e.target.value)}
+                  >
+                    <option value="all">All Claims</option>
+                    <option value="supporting">Supporting</option>
+                    <option value="contradiction">Contradicting</option>
+                    <option value="neutral">Neutral</option>
                   </select>
-                  <select className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] outline-none shadow-sm text-slate-700 font-medium">
-                    <option>Sort by Page</option>
+                  <select 
+                    className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] outline-none shadow-sm text-slate-700 font-medium cursor-pointer"
+                    value={sortClaimsBy}
+                    onChange={(e) => setSortClaimsBy(e.target.value)}
+                  >
+                    <option value="page">Sort by Page</option>
+                    <option value="length">Sort by Length</option>
                   </select>
-                  <button className="bg-white border border-slate-200 p-2 rounded-lg shadow-sm"><Settings className="w-4 h-4 text-slate-600"/></button>
                 </div>
 
                 {/* Notice banner */}
@@ -322,7 +476,15 @@ export default function PaperDetails() {
                 {/* Claims List */}
                 <div className="flex flex-col gap-3">
                   {filteredClaims.length === 0 ? (
-                    <div className="bg-white border border-slate-200 rounded-xl p-10 text-center text-slate-500 shadow-sm">No claims match your search.</div>
+                    <div className="bg-white border border-slate-200 rounded-xl p-10 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center gap-3">
+                      <p className="text-[13px] font-medium text-slate-600">No claims match your filter criteria.</p>
+                      <button
+                        onClick={() => { setSearchQuery(''); setFilterClaimType('all'); setSelectedPage('all'); }}
+                        className="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[12px] font-bold hover:bg-emerald-100 transition-colors cursor-pointer"
+                      >
+                        Clear All Filters
+                      </button>
+                    </div>
                   ) : (
                     filteredClaims.map((claim, idx) => {
                       const rels = getRelationshipsForClaim(claim.id);
@@ -457,6 +619,74 @@ export default function PaperDetails() {
             </div>
           </div>
         </main>
+
+        {/* Document Reader Preview Modal */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 relative animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-[18px] text-slate-900">Document Reader</h3>
+                    <p className="text-[11px] text-slate-500 font-mono">{paper.fileName}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowModal(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-[13px] text-slate-600">
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2.5">
+                  <div className="flex justify-between items-start text-[12px] gap-4">
+                    <span className="text-slate-500 shrink-0">Title:</span>
+                    <span className="font-semibold text-slate-800 text-right">{paper.title}</span>
+                  </div>
+                  <div className="flex justify-between text-[12px]">
+                    <span className="text-slate-500">File Name:</span>
+                    <span className="font-mono text-slate-700">{paper.fileName}</span>
+                  </div>
+                  <div className="flex justify-between text-[12px]">
+                    <span className="text-slate-500">Total Pages:</span>
+                    <span className="font-semibold text-slate-800">{paper.pages || '?'}</span>
+                  </div>
+                  <div className="flex justify-between text-[12px]">
+                    <span className="text-slate-500">Extracted Claims:</span>
+                    <span className="font-semibold text-emerald-600">{paperClaims.length} claims</span>
+                  </div>
+                </div>
+
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-[12px] text-emerald-800 flex items-start gap-2.5">
+                  <Info className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    <strong>Verified Document Record:</strong> Text and page references extracted via PyMuPDF. All candidate assertions are linked to their corresponding source pages.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 text-[13px] font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+                <Link
+                  to={`/analysis/${analysis.id}/results`}
+                  className="px-4 py-2 text-[13px] font-bold bg-[#0b1f1b] text-white hover:bg-slate-900 rounded-lg transition-colors shadow-sm"
+                >
+                  View All Evidence &rarr;
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

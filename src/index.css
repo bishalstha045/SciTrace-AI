@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import './darkMode.css';
 
 @tailwind base;
 @tailwind components;
@@ -48,6 +49,21 @@
     animation: float 8s ease-in-out infinite;
     animation-delay: 1s;
   }
+  .animate-float-subtle-1 {
+    animation: floatSubtle1 5s ease-in-out infinite;
+  }
+  .animate-float-subtle-2 {
+    animation: floatSubtle2 6s ease-in-out infinite;
+  }
+  .animate-float-subtle-3 {
+    animation: floatSubtle3 5.5s ease-in-out infinite;
+  }
+  .animate-flow-dash {
+    animation: flowDash 1.2s linear infinite;
+  }
+  .animate-flow-dash-slow {
+    animation: flowDash 2s linear infinite;
+  }
 }
 
 @keyframes float {
@@ -55,3 +71,29 @@
   50% { transform: translateY(-10px); }
   100% { transform: translateY(0px); }
 }
+
+@keyframes floatSubtle1 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes floatSubtle2 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(5px); }
+}
+
+@keyframes floatSubtle3 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes flowDash {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+

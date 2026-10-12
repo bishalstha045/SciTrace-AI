@@ -3,6 +3,8 @@ export const demoAnalysis = {
   title: "Research Analysis - October 2026",
   status: "completed",
   progress: 100,
+  isDemo: true,
+  isSimulation: true,
   createdAt: "2026-10-07T10:00:00Z",
   updatedAt: "2026-10-07T10:05:00Z",
   papers: [
@@ -139,3 +141,6 @@ export const demoAnalysis = {
     }
   ]
 };
+
+export const demoAnalysisData = demoAnalysis;
+export default demoAnalysis;

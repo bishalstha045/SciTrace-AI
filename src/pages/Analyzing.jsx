@@ -30,84 +30,130 @@ const StepIcon = ({ active, complete, waiting, icon: Icon, colorClass, bgClass }
 
 import { useNavigate, useParams } from 'react-router-dom';
 import { mockAnalysisService } from '../services/mockAnalysisService';
+import { api } from '../services/api';
 import ProfileMenu from '../components/ProfileMenu';
 
 export default function Analyzing() {
-  const [scale, setScale] = useState(1);
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
+  const [analysisData, setAnalysisData] = useState(null);
+  const [error, setError] = useState(null);
+  const [statusMessage, setStatusMessage] = useState('Initializing AI contradiction pipeline...');
   const navigate = useNavigate();
   const { analysisId } = useParams();
 
-  useEffect(() => {
-    const updateScale = () => {
-      const scaleX = window.innerWidth / 1440;
-      setScale(scaleX > 1 ? 1 : scaleX);
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
+  const isDemo = !analysisId || analysisId === 'demo-analysis' || analysisId === 'demo';
 
   useEffect(() => {
     const id = analysisId || 'demo-analysis';
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        const next = prev + 1;
-        
-        // Update mock service
-        if (next % 5 === 0) {
-           mockAnalysisService.updateProgress(id, next, "processing");
-        }
-        
-        if (next >= 100) {
-          clearInterval(interval);
-          mockAnalysisService.updateProgress(id, 100, "completed");
-          setTimeout(() => navigate(`/analysis/${id}/results`), 500);
-          return 100;
-        }
-        return next;
-      });
-    }, 60);
 
-    return () => clearInterval(interval);
-  }, [navigate, analysisId]);
+    if (isDemo) {
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          const next = prev + 1;
+          if (next % 5 === 0) {
+            mockAnalysisService.updateProgress(id, next, "processing");
+          }
+          if (next >= 100) {
+            clearInterval(interval);
+            mockAnalysisService.updateProgress(id, 100, "completed");
+            setTimeout(() => navigate(`/analysis/${id}/results`), 500);
+            return 100;
+          }
+          return next;
+        });
+      }, 60);
+      return () => clearInterval(interval);
+    }
+
+    // Live backend status polling
+    let isMounted = true;
+    let pollCount = 0;
+    let timerId = null;
+
+    const poll = async () => {
+      try {
+        const res = await api.getAnalysis(id);
+        if (!isMounted) return;
+
+        if (res.data) {
+          const data = res.data;
+          setAnalysisData(data);
+          const currentProgress = typeof data.progress === 'number' ? data.progress : 10;
+          setProgress(prev => Math.max(prev, currentProgress));
+
+          if (data.status === 'completed') {
+            setProgress(100);
+            setStatusMessage('Analysis complete! Redirecting to results...');
+            setTimeout(() => {
+              if (isMounted) navigate(`/analysis/${id}/results`);
+            }, 600);
+            return;
+          } else if (data.status === 'failed') {
+            setError(data.error || data.message || 'Analysis pipeline encountered an error.');
+            setStatusMessage('Analysis failed');
+            return;
+          } else {
+            if (currentProgress < 25) {
+              setStatusMessage('Extracting document text with PyMuPDF...');
+            } else if (currentProgress < 50) {
+              setStatusMessage('Extracting candidate scientific claims...');
+            } else if (currentProgress < 75) {
+              setStatusMessage('Computing embeddings & matching related claims (all-MiniLM-L6-v2)...');
+            } else {
+              setStatusMessage('Evaluating contradiction and support relationships (BART-large-MNLI)...');
+            }
+          }
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        console.warn('Poll error:', err);
+      }
+
+      pollCount++;
+      if (pollCount > 180) { // 3 minutes timeout
+        if (isMounted) setError('Analysis timed out. Please check backend logs or reload.');
+        return;
+      }
+
+      if (isMounted) {
+        timerId = setTimeout(poll, 1500);
+      }
+    };
+
+    timerId = setTimeout(poll, 600);
+
+    return () => {
+      isMounted = false;
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [navigate, analysisId, isDemo]);
 
   return (
-    <div className="w-full bg-[#f8fafc] overflow-x-hidden flex justify-center font-sans" style={{ minHeight: '100vh', height: `${1000 * scale}px` }}>
-      <div 
-        className="relative bg-[#f8fafc] shrink-0 origin-top" 
-        style={{ width: '1440px', height: '1000px', transform: `scale(${scale})` }}
-      >
-        
-        {/* Navbar */}
-        <nav className="absolute top-0 left-0 w-full h-[80px] flex items-center justify-between px-[60px] z-50 border-b border-slate-200/50 bg-white/80 backdrop-blur-md">
-          <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <LogoIcon className="w-7 h-7 text-[#0f2a24]" strokeWidth={2} />
-            <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] font-sans">
+      {/* Navbar */}
+      <nav className="w-full bg-white px-6 sm:px-10 py-4 flex items-center justify-between border-b border-slate-200/50 z-50">
+        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <LogoIcon className="w-7 h-7 text-emerald-500" strokeWidth={2} />
+          <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-10">
+          <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Analyses</Link>
+          <Link to="/papers" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
+        </div>
+
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link to="/analysis/new" className="bg-[#0b1f1b] text-white px-5 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2 hidden sm:flex">
+            New Analysis <Plus className="w-4 h-4"/>
           </Link>
+          <ProfileMenu />
+        </div>
+      </nav>
 
-          <div className="flex items-center gap-10">
-            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Analyses</Link>
-            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <Link to="/analyses" title="Search Analyses" className="text-slate-400 hover:text-slate-600">
-              <Search className="w-5 h-5" strokeWidth={2} />
-            </Link>
-            <Link to="/analysis/new" className="bg-[#0b1f1b] text-white px-5 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2">
-              New Analysis <Plus className="w-4 h-4"/>
-            </Link>
-            <ProfileMenu />
-          </div>
-        </nav>
-
-        {/* Faint Background Gradients */}
-        <div className="absolute right-0 top-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.05),transparent_70%)] pointer-events-none"></div>
-
-        {/* Main Content Area */}
-        <div className="absolute left-[60px] top-[120px] w-[600px]">
+      {/* Main Content Area */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 sm:px-10 py-8 flex flex-col xl:flex-row gap-10 relative">
+        <div className="flex-[1] xl:max-w-[600px] mt-8 z-10">
           <div className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-4">
             ANALYZING YOUR RESEARCH
           </div>
@@ -117,13 +163,39 @@ export default function Analyzing() {
               research
             </span>
           </h1>
+          {isDemo ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2 text-[12px] text-amber-800">
+              <span className="font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded text-[10px] uppercase shrink-0">Simulated Analysis</span>
+              <span>Demonstration extraction engine in progress.</span>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-6 flex items-start gap-3 text-[13px] text-red-800">
+              <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-red-900">Analysis Pipeline Notice</p>
+                <p className="text-red-700 mt-1">{error}</p>
+                <Link to="/analyses" className="inline-block mt-3 bg-red-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-900">
+                  Return to Analyses
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2 text-[12px] text-emerald-800">
+              <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[10px] uppercase shrink-0">Live AI Pipeline</span>
+              <span>Extracting scientific claims and evaluating contradictions with sentence embeddings and BART-large-MNLI.</span>
+            </div>
+          )}
           <p className="text-[16px] text-slate-500 leading-relaxed mb-8 max-w-[500px]">
             SciTrace AI is reading your papers, identifying scientific claims, and comparing related findings.
           </p>
 
           <div className="mb-6">
             <div className="flex justify-between items-end mb-3">
-              <p className="text-[14px] font-semibold text-slate-700">3 papers &nbsp;&bull;&nbsp; 127 candidate claims</p>
+              <p className="text-[14px] font-semibold text-slate-700">
+                {analysisData?.papers?.length ? `${analysisData.papers.length} paper(s)` : (isDemo ? '3 papers' : 'Research papers')}
+                {' '}&bull;{' '}
+                {analysisData?.claims?.length ? `${analysisData.claims.length} candidate claim(s)` : (isDemo ? '127 candidate claims' : 'Processing claims')}
+              </p>
               <p className="text-[24px] font-bold text-slate-800 leading-none">{progress}%</p>
             </div>
             <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
@@ -133,7 +205,7 @@ export default function Analyzing() {
             </div>
             <div className="flex items-center gap-2 mt-3 text-blue-600 font-medium text-[13px]">
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              Comparing related claims...
+              {statusMessage}
             </div>
           </div>
         </div>
@@ -415,9 +487,8 @@ export default function Analyzing() {
              <ShieldCheck className="w-4 h-4"/>
              <span className="font-bold text-slate-700">AI predictions are not scientific conclusions.</span> SciTrace AI highlights potential relationships between research claims and provides source evidence for further investigation.
           </div>
-        </div>
-
-      </div>
+          </div>
+      </main>
     </div>
   );
 }

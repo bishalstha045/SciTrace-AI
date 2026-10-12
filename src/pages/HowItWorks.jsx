@@ -1,14 +1,15 @@
 import { Link } from 'react-router-dom';
 import { UploadCloud, Cpu, Share2, Search, FileText } from 'lucide-react';
 import Footer from '../components/Footer';
+import ProfileMenu from '../components/ProfileMenu';
 
 export default function HowItWorks() {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col">
-      {/* Navbar Minimal */}
-      <nav className="w-full h-[80px] flex items-center justify-between px-12 bg-white border-b border-slate-200 sticky top-0 z-50">
+      {/* Navbar Minimal -> Premium */}
+      <nav className="w-full h-[100px] flex items-center justify-between px-6 lg:px-[60px] bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <Link to="/" className="flex items-center gap-2.5">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-[#0f2a24]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-emerald-500">
             <circle cx="12" cy="12" r="1.5" />
             <circle cx="5" cy="5" r="1.5" />
             <circle cx="19" cy="5" r="1.5" />
@@ -19,14 +20,26 @@ export default function HowItWorks() {
             <line x1="10.5" y1="13.5" x2="6.5" y2="17.5" />
             <line x1="13.5" y1="13.5" x2="17.5" y2="17.5" />
           </svg>
-          <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+          <span className="font-serif font-bold text-[#0f2a24] text-[26px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
         </Link>
-        <div className="flex items-center gap-6">
-          <Link to="/about" className="text-slate-600 font-medium hover:text-slate-900 transition-colors text-[15px]">About</Link>
-          <Link to="/" className="text-slate-600 font-medium hover:text-slate-900 transition-colors text-[15px]">Home</Link>
-          <Link to={localStorage.getItem('isAuthenticated') === 'true' ? "/analysis/new" : "/signin"} className="bg-[#0f172a] text-white px-5 py-2 rounded-lg font-bold text-[14px] hover:bg-slate-900 transition-all shadow-md">
-            Start Analysis
-          </Link>
+
+        <div className="hidden md:flex items-center gap-12 ml-12">
+            <Link to="/" className="text-slate-500 font-semibold text-[15px] hover:text-slate-900 cursor-pointer transition-colors">Home</Link>
+            <div className="relative">
+              <Link to="/how-it-works" className="text-slate-900 font-bold text-[15px] cursor-pointer">How It Works</Link>
+              <div className="absolute -bottom-[8px] left-0 w-full h-[2px] bg-slate-900 rounded-full"></div>
+            </div>
+            <Link to="/about" className="text-slate-500 font-semibold text-[15px] hover:text-slate-900 cursor-pointer transition-colors">About</Link>
+        </div>
+
+        <div className="flex items-center gap-4 lg:gap-6">
+            <Link to="/analysis/demo-analysis/results" className="hidden lg:block bg-slate-100/80 border border-slate-200/80 text-slate-800 px-6 py-2.5 rounded-lg font-bold text-[14px] hover:bg-slate-200 transition-colors shadow-sm">
+                View Demo
+            </Link>
+            <Link to={localStorage.getItem('isAuthenticated') === 'true' ? "/analysis/new" : "/signin"} className="bg-[#0f172a] text-white px-6 py-2.5 rounded-lg font-bold text-[14px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2">
+                Start Analysis &rarr;
+            </Link>
+            {localStorage.getItem('isAuthenticated') === 'true' && <ProfileMenu />}
         </div>
       </nav>
 
@@ -132,18 +145,6 @@ export default function HowItWorks() {
 
         </section>
 
-        {/* CTA */}
-        <section className="bg-[#0f172a] py-20 px-6 text-center">
-          <h2 className="text-3xl font-serif font-bold text-white mb-6">Experience the process firsthand.</h2>
-          <div className="flex items-center justify-center gap-4">
-            <Link to="/analysis/demo-analysis/results" className="bg-slate-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-slate-700 transition-colors">
-              View Interactive Demo
-            </Link>
-            <Link to={localStorage.getItem('isAuthenticated') === 'true' ? "/analysis/new" : "/signin"} className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20">
-              Start Your Own Analysis
-            </Link>
-          </div>
-        </section>
 
       </main>
 

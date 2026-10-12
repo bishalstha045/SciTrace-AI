@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, FileText, Play, CheckCircle2, ShieldCheck, Database, Users, Cpu } from 'lucide-react';
 import Footer from '../components/Footer';
+import ProfileMenu from '../components/ProfileMenu';
 
 const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -76,7 +77,7 @@ export default function Landing() {
         {/* Navbar */}
         <nav className="absolute top-0 left-0 w-full h-[100px] flex items-center justify-between px-[60px] z-50">
           <div className="flex items-center gap-2.5">
-            <LogoIcon className="w-8 h-8 text-[#0f2a24]" strokeWidth={2} />
+            <LogoIcon className="w-8 h-8 text-emerald-500" strokeWidth={2} />
             <span className="font-serif font-bold text-[#0f2a24] text-[26px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
           </div>
 
@@ -96,6 +97,7 @@ export default function Landing() {
             <Link to={localStorage.getItem('isAuthenticated') === 'true' ? "/analysis/new" : "/signin"} className="bg-[#0f172a] text-white px-6 py-2.5 rounded-lg font-bold text-[14px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2">
               Start Analysis &rarr;
             </Link>
+            {localStorage.getItem('isAuthenticated') === 'true' && <ProfileMenu />}
           </div>
         </nav>
 
@@ -141,33 +143,173 @@ export default function Landing() {
 
         {/* Floating Graphics & Cards (Right) */}
         
-        {/* SVG Connecting Lines */}
+        {/* SVG Connecting Lines with Moving Flow and Animated Arrows */}
         <svg className="absolute inset-0 w-full h-full z-10" pointerEvents="none">
-           {/* Climate Change -> AI Analysis */}
-           <path d="M 790 180 C 840 180, 820 350, 860 350" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="4 4" />
-           {/* Ocean Temp -> AI Analysis */}
-           <path d="M 750 320 C 840 320, 820 350, 860 350" fill="none" stroke="#ef4444" strokeWidth="1.5" />
-           {/* Marine Eco -> AI Analysis */}
-           <path d="M 790 460 C 840 460, 820 350, 860 350" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="4 4" />
-           
-           {/* Dots to cards */}
-           <circle cx="790" cy="180" r="3.5" fill="#10b981" />
-           <circle cx="750" cy="320" r="3.5" fill="#ef4444" />
-           <circle cx="790" cy="460" r="3.5" fill="#10b981" />
-           
-           {/* Lines from AI Node to Right Card */}
-           <path d="M 910 350 C 960 350, 950 200, 1000 200" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6"/>
-           <path d="M 910 350 C 960 350, 950 300, 1000 300" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6"/>
-           <path d="M 910 350 C 960 350, 950 420, 1000 420" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6"/>
-           <path d="M 910 350 C 960 350, 950 520, 1000 520" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6"/>
-           
-           {/* AI Node dot */}
-           <circle cx="860" cy="350" r="4" fill="#059669" />
-           <circle cx="910" cy="350" r="4" fill="#059669" />
+          <defs>
+            <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 1 2 L 7 5 L 1 8 z" fill="#059669" />
+            </marker>
+            <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 1 2 L 7 5 L 1 8 z" fill="#ef4444" />
+            </marker>
+          </defs>
+
+          {/* Background subtle contour ripples */}
+          <path d="M 680 120 C 780 100, 880 200, 940 320 C 1000 440, 950 560, 850 600" fill="none" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="3 6" opacity="0.6" />
+          <path d="M 720 150 C 810 130, 890 220, 930 330 C 970 430, 930 520, 840 560" fill="none" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="3 6" opacity="0.5" />
+
+          {/* 1. Climate Change -> AI Analysis */}
+          <path 
+            id="path-landing-1"
+            d="M 790 180 C 840 180, 820 350, 860 350" 
+            fill="none" 
+            stroke="#059669" 
+            strokeWidth="1.75" 
+            strokeDasharray="5 5" 
+            className="animate-flow-dash" 
+            markerEnd="url(#arrow-emerald)"
+          />
+
+          {/* 2. Ocean Temp -> AI Analysis */}
+          <path 
+            id="path-landing-2"
+            d="M 750 320 C 840 320, 820 350, 860 350" 
+            fill="none" 
+            stroke="#ef4444" 
+            strokeWidth="1.75" 
+            markerEnd="url(#arrow-red)"
+          />
+
+          {/* 3. Marine Eco -> AI Analysis */}
+          <path 
+            id="path-landing-3"
+            d="M 790 460 C 840 460, 820 350, 860 350" 
+            fill="none" 
+            stroke="#059669" 
+            strokeWidth="1.75" 
+            strokeDasharray="5 5" 
+            className="animate-flow-dash" 
+            markerEnd="url(#arrow-emerald)"
+          />
+
+          {/* Active Moving Arrows along incoming paths */}
+          {/* Top Path Moving Arrows */}
+          <g>
+            <path d="M -5 -3.5 L 3 0 L -5 3.5 L -2 0 Z" fill="#059669" />
+            <animateMotion
+              path="M 790 180 C 840 180, 820 350, 860 350"
+              dur="2.4s"
+              repeatCount="indefinite"
+              rotate="auto"
+            />
+          </g>
+          <g>
+            <path d="M -5 -3.5 L 3 0 L -5 3.5 L -2 0 Z" fill="#059669" />
+            <animateMotion
+              path="M 790 180 C 840 180, 820 350, 860 350"
+              dur="2.4s"
+              begin="1.2s"
+              repeatCount="indefinite"
+              rotate="auto"
+            />
+          </g>
+
+          {/* Middle Red Path Moving Arrows */}
+          <g>
+            <path d="M -5 -3.5 L 3 0 L -5 3.5 L -2 0 Z" fill="#ef4444" />
+            <animateMotion
+              path="M 750 320 C 840 320, 820 350, 860 350"
+              dur="2s"
+              repeatCount="indefinite"
+              rotate="auto"
+            />
+          </g>
+          <g>
+            <path d="M -5 -3.5 L 3 0 L -5 3.5 L -2 0 Z" fill="#ef4444" />
+            <animateMotion
+              path="M 750 320 C 840 320, 820 350, 860 350"
+              dur="2s"
+              begin="1s"
+              repeatCount="indefinite"
+              rotate="auto"
+            />
+          </g>
+
+          {/* Bottom Path Moving Arrows */}
+          <g>
+            <path d="M -5 -3.5 L 3 0 L -5 3.5 L -2 0 Z" fill="#059669" />
+            <animateMotion
+              path="M 790 460 C 840 460, 820 350, 860 350"
+              dur="2.4s"
+              repeatCount="indefinite"
+              rotate="auto"
+            />
+          </g>
+          <g>
+            <path d="M -5 -3.5 L 3 0 L -5 3.5 L -2 0 Z" fill="#059669" />
+            <animateMotion
+              path="M 790 460 C 840 460, 820 350, 860 350"
+              dur="2.4s"
+              begin="1.2s"
+              repeatCount="indefinite"
+              rotate="auto"
+            />
+          </g>
+
+          {/* Animated Origin Dots with pulsing radar rings */}
+          <g>
+            <circle cx="790" cy="180" r="3.5" fill="#10b981" />
+            <circle cx="790" cy="180" r="7" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.4">
+              <animate attributeName="r" values="3.5;8;3.5" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
+            </circle>
+          </g>
+          <g>
+            <circle cx="750" cy="320" r="3.5" fill="#ef4444" />
+            <circle cx="750" cy="320" r="7" fill="none" stroke="#ef4444" strokeWidth="1" opacity="0.4">
+              <animate attributeName="r" values="3.5;8;3.5" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
+            </circle>
+          </g>
+          <g>
+            <circle cx="790" cy="460" r="3.5" fill="#10b981" />
+            <circle cx="790" cy="460" r="7" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.4">
+              <animate attributeName="r" values="3.5;8;3.5" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
+            </circle>
+          </g>
+
+          {/* Outgoing Lines from AI Node to Right Comparison Cards */}
+          <path d="M 910 350 C 960 350, 950 200, 1000 200" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="4 4" className="animate-flow-dash" opacity="0.7" />
+          <path d="M 910 350 C 960 350, 950 300, 1000 300" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="4 4" className="animate-flow-dash" opacity="0.7" />
+          <path d="M 910 350 C 960 350, 950 420, 1000 420" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="4 4" className="animate-flow-dash" opacity="0.7" />
+          <path d="M 910 350 C 960 350, 950 520, 1000 520" fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="4 4" className="animate-flow-dash" opacity="0.7" />
+
+          {/* Moving Arrows exiting AI node to Right Cards */}
+          <g>
+            <path d="M -4 -3 L 2.5 0 L -4 3 L -1.5 0 Z" fill="#059669" opacity="0.8" />
+            <animateMotion path="M 910 350 C 960 350, 950 200, 1000 200" dur="2.2s" repeatCount="indefinite" rotate="auto" />
+          </g>
+          <g>
+            <path d="M -4 -3 L 2.5 0 L -4 3 L -1.5 0 Z" fill="#059669" opacity="0.8" />
+            <animateMotion path="M 910 350 C 960 350, 950 300, 1000 300" dur="2.2s" repeatCount="indefinite" rotate="auto" />
+          </g>
+          <g>
+            <path d="M -4 -3 L 2.5 0 L -4 3 L -1.5 0 Z" fill="#059669" opacity="0.8" />
+            <animateMotion path="M 910 350 C 960 350, 950 420, 1000 420" dur="2.2s" repeatCount="indefinite" rotate="auto" />
+          </g>
+          <g>
+            <path d="M -4 -3 L 2.5 0 L -4 3 L -1.5 0 Z" fill="#059669" opacity="0.8" />
+            <animateMotion path="M 910 350 C 960 350, 950 520, 1000 520" dur="2.2s" repeatCount="indefinite" rotate="auto" />
+          </g>
+
+          {/* AI Node Connector Dots */}
+          <circle cx="860" cy="350" r="4" fill="#059669" />
+          <circle cx="910" cy="350" r="4" fill="#059669" />
         </svg>
 
         {/* Floating Paper 1 */}
-        <div className="absolute left-[560px] top-[140px] w-[230px] bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex items-center gap-3">
+        <div className="absolute left-[560px] top-[140px] w-[230px] bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex items-center gap-3 animate-float-subtle-1 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
           <PdfDocIcon />
           <div>
             <h4 className="font-semibold text-[11px] leading-tight mb-1 text-slate-800">Climate Change Impacts on Marine Ecosystems</h4>
@@ -177,7 +319,7 @@ export default function Landing() {
         </div>
 
         {/* Floating Paper 2 */}
-        <div className="absolute left-[520px] top-[280px] w-[230px] bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-slate-100 z-20 flex items-center gap-3">
+        <div className="absolute left-[520px] top-[280px] w-[230px] bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-slate-100 z-20 flex items-center gap-3 animate-float-subtle-2 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
           <PdfDocIcon />
           <div>
             <h4 className="font-semibold text-[11px] leading-tight mb-1 text-slate-800">Ocean Temperature and Coral Bleaching</h4>
@@ -187,7 +329,7 @@ export default function Landing() {
         </div>
 
         {/* Floating Paper 3 */}
-        <div className="absolute left-[560px] top-[420px] w-[230px] bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex items-center gap-3">
+        <div className="absolute left-[560px] top-[420px] w-[230px] bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex items-center gap-3 animate-float-subtle-3 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
           <PdfDocIcon />
           <div>
             <h4 className="font-semibold text-[11px] leading-tight mb-1 text-slate-800">Marine Ecosystem Adaptation Mechanisms</h4>
@@ -196,10 +338,14 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* AI Node */}
-        <div className="absolute left-[860px] top-[300px] w-[90px] h-[90px] bg-[#e0fdf4]/90 backdrop-blur-md border-2 border-emerald-100 p-4 rounded-[1.25rem] shadow-[0_0_40px_rgba(16,185,129,0.3)] flex flex-col items-center justify-center z-30">
-          <LogoIcon className="w-7 h-7 text-[#059669] mb-1.5" strokeWidth={2.5} />
-          <span className="text-[10px] font-bold text-[#065f46] text-center leading-tight">AI<br/>Analysis</span>
+        {/* AI Node with Glowing Halo */}
+        <div className="absolute left-[860px] top-[300px] w-[90px] h-[90px] z-30 group">
+          <div className="absolute -inset-3 bg-emerald-400/20 rounded-[2rem] blur-xl animate-pulse pointer-events-none"></div>
+          <div className="absolute -inset-1 bg-emerald-300/35 rounded-[1.5rem] blur-sm animate-pulse pointer-events-none"></div>
+          <div className="relative w-full h-full bg-[#e0fdf4]/95 backdrop-blur-md border-2 border-emerald-200 p-4 rounded-[1.25rem] shadow-[0_0_40px_rgba(16,185,129,0.3)] flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-105">
+            <LogoIcon className="w-7 h-7 text-[#059669] mb-1.5 animate-pulse" strokeWidth={2.5} />
+            <span className="text-[10px] font-bold text-[#065f46] text-center leading-tight">AI<br/>Analysis</span>
+          </div>
         </div>
 
         {/* Claim Comparison Large Card */}
@@ -222,7 +368,7 @@ export default function Landing() {
                   <p className="text-[10px] text-slate-500 mt-1.5">Smith et al. (2023)</p>
                   <div className="flex items-center justify-between mt-0.5">
                     <p className="text-[10px] text-slate-400">Page 12</p>
-                    <span className="text-[10px] text-blue-600 font-bold cursor-pointer hover:underline">View in paper &nearr;</span>
+                    <span className="text-[10px] text-blue-600 font-bold cursor-pointer hover:underline flex items-center gap-0.5">View in paper ↗</span>
                   </div>
                 </div>
               </div>
@@ -239,7 +385,7 @@ export default function Landing() {
                   </div>
                   <p className="text-[11px] text-slate-700 leading-snug mb-1.5">Higher sea surface temperatures are significantly associated with coral bleaching events.</p>
                   <div className="flex justify-between items-end">
-                    <p className="text-[9px] text-slate-500">Johnson et al. (2022) &bull; Page 8, 15</p>
+                    <p className="text-[9px] text-slate-500">Johnson et al. (2022) • Page 8, 15</p>
                     <FileText className="w-3.5 h-3.5 text-slate-400"/>
                   </div>
                 </div>
@@ -257,7 +403,7 @@ export default function Landing() {
                   </div>
                   <p className="text-[11px] text-slate-700 leading-snug mb-1.5">Coral bleaching is not significantly affected by temperature alone.</p>
                   <div className="flex justify-between items-end">
-                    <p className="text-[9px] text-slate-500">Lee et al. (2021) &bull; Page 5, 27</p>
+                    <p className="text-[9px] text-slate-500">Lee et al. (2021) • Page 5, 27</p>
                     <FileText className="w-3.5 h-3.5 text-slate-400"/>
                   </div>
                 </div>
@@ -275,7 +421,7 @@ export default function Landing() {
                   </div>
                   <p className="text-[11px] text-slate-700 leading-snug mb-1.5">Other factors like ocean acidification also contribute to coral bleaching.</p>
                   <div className="flex justify-between items-end">
-                    <p className="text-[9px] text-slate-500">Garcia et al. (2020) &bull; Page 10, 14</p>
+                    <p className="text-[9px] text-slate-500">Garcia et al. (2020) • Page 10, 14</p>
                     <FileText className="w-3.5 h-3.5 text-slate-400"/>
                   </div>
                 </div>
