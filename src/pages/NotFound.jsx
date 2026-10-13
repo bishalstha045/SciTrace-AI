@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Compass, LayoutGrid } from 'lucide-react';
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="12" cy="12" r="1.5" />
@@ -67,7 +69,7 @@ export default function NotFound() {
 
       {/* Footer */}
       <footer className="py-6 text-center text-[12px] text-slate-400 border-t border-slate-200/40 bg-white">
-        &copy; {new Date().getFullYear()} SciTrace AI. All rights reserved.
+        &copy; {CURRENT_YEAR} SciTrace AI. All rights reserved.
       </footer>
     </div>
   );

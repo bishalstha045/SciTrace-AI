@@ -40,28 +40,28 @@ export default function AuthLayout({ children }) {
 
   return (
     <div className="w-screen min-h-screen bg-[#f8fafc] overflow-hidden flex items-center justify-center font-sans relative">
-      
+
       {/* Desktop Layout - Hidden on mobile/tablet */}
-      <div 
-        className="hidden lg:block relative bg-[#f8fafc] shrink-0 origin-center" 
+      <div
+        className="hidden lg:block relative bg-[#f8fafc] shrink-0 origin-center"
         style={{ width: '1440px', height: '900px', transform: `scale(${scale})` }}
       >
 
         {/* Realistic Stack of Papers (Right Side Only) */}
         <div className="absolute left-[450px] top-[550px] w-[800px] h-[500px] z-0 pointer-events-none opacity-95">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute w-[800px] h-[400px] bg-white border border-slate-200/80 shadow-[0_-2px_12px_rgba(0,0,0,0.03)] rounded-tl-lg" 
-              style={{ 
-                left: `${i * 8}px`, 
-                top: `${i * 18}px`, 
-                transform: `rotate(${-8 + i * 1.2}deg)` 
+            <div
+              key={i}
+              className="absolute w-[800px] h-[400px] bg-white border border-slate-200/80 shadow-[0_-2px_12px_rgba(0,0,0,0.03)] rounded-tl-lg"
+              style={{
+                left: `${i * 8}px`,
+                top: `${i * 18}px`,
+                transform: `rotate(${-8 + i * 1.2}deg)`
               }}
             >
-               {i === 2 && <span className="absolute bottom-16 right-32 font-serif text-[22px] text-slate-400 opacity-70">Nature</span>}
-               {i === 6 && <span className="absolute bottom-16 right-32 font-serif text-[22px] text-slate-400 opacity-70">Science</span>}
-               {i === 10 && <span className="absolute bottom-16 right-32 font-serif text-[22px] text-slate-400 opacity-70">Cell</span>}
+              {i === 2 && <span className="absolute bottom-16 right-32 font-serif text-[22px] text-slate-400 opacity-70">Nature</span>}
+              {i === 6 && <span className="absolute bottom-16 right-32 font-serif text-[22px] text-slate-400 opacity-70">Science</span>}
+              {i === 10 && <span className="absolute bottom-16 right-32 font-serif text-[22px] text-slate-400 opacity-70">Cell</span>}
             </div>
           ))}
         </div>
@@ -81,7 +81,7 @@ export default function AuthLayout({ children }) {
             AI-POWERED SCIENTIFIC ANALYSIS
           </div>
           <h1 className="text-[54px] font-serif text-[#0f2a24] leading-[1.05] mb-6 tracking-tight">
-            Turn scientific <br/> literature into <br/> 
+            Turn scientific <br /> literature into <br />
             <span className="relative z-10 text-[#0f2a24] inline-block mt-2">
               <span className="absolute -inset-x-2 inset-y-1 bg-[#e0f7ef] rounded-[10px] -z-10"></span>
               clear insights.
@@ -112,7 +112,7 @@ export default function AuthLayout({ children }) {
             </div>
             <div className="flex gap-5 items-start">
               <div className="bg-[#f1f5f9] w-[52px] h-[52px] rounded-[16px] flex items-center justify-center shrink-0 border border-slate-100">
-                <svg className="w-6 h-6 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <svg className="w-6 h-6 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
               </div>
               <div className="pt-1">
                 <h3 className="font-semibold text-slate-900 text-[16px]">Built for researchers</h3>
@@ -140,48 +140,48 @@ export default function AuthLayout({ children }) {
           <path d="M 680 150 C 770 130, 870 220, 900 330 C 930 430, 890 520, 790 580" fill="none" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="3 6" opacity="0.5" />
 
           {/* 1. Top card to AI node */}
-          <path 
+          <path
             id="path-auth-1"
-            d="M 800 190 C 830 190, 820 350, 850 350" 
-            fill="none" 
-            stroke="#059669" 
-            strokeWidth="1.75" 
-            strokeDasharray="5 5" 
-            className="animate-flow-dash" 
+            d="M 800 190 C 830 190, 820 350, 850 350"
+            fill="none"
+            stroke="#059669"
+            strokeWidth="1.75"
+            strokeDasharray="5 5"
+            className="animate-flow-dash"
             markerEnd="url(#auth-arrow-emerald)"
           />
 
           {/* 2. Middle card to AI node */}
-          <path 
+          <path
             id="path-auth-2"
-            d="M 760 330 C 800 330, 820 350, 850 350" 
-            fill="none" 
-            stroke="#ef4444" 
-            strokeWidth="1.75" 
+            d="M 760 330 C 800 330, 820 350, 850 350"
+            fill="none"
+            stroke="#ef4444"
+            strokeWidth="1.75"
             markerEnd="url(#auth-arrow-red)"
           />
 
           {/* 3. Bottom card to AI node */}
-          <path 
+          <path
             id="path-auth-3"
-            d="M 800 470 C 830 470, 820 350, 850 350" 
-            fill="none" 
-            stroke="#059669" 
-            strokeWidth="1.75" 
-            strokeDasharray="5 5" 
-            className="animate-flow-dash" 
+            d="M 800 470 C 830 470, 820 350, 850 350"
+            fill="none"
+            stroke="#059669"
+            strokeWidth="1.75"
+            strokeDasharray="5 5"
+            className="animate-flow-dash"
             markerEnd="url(#auth-arrow-emerald)"
           />
 
           {/* 4. AI Node to Right Form Card */}
-          <path 
+          <path
             id="path-auth-out"
-            d="M 950 350 C 960 350, 970 350, 980 350" 
-            fill="none" 
-            stroke="#059669" 
-            strokeWidth="1.75" 
-            strokeDasharray="4 4" 
-            className="animate-flow-dash" 
+            d="M 950 350 C 960 350, 970 350, 980 350"
+            fill="none"
+            stroke="#059669"
+            strokeWidth="1.75"
+            strokeDasharray="4 4"
+            className="animate-flow-dash"
             markerEnd="url(#auth-arrow-emerald)"
           />
 
@@ -289,7 +289,7 @@ export default function AuthLayout({ children }) {
         </svg>
 
         {/* Middle Floating Graphics */}
-        
+
         {/* Paper 1: Climate Change */}
         <div className="absolute left-[540px] top-[140px] w-[260px] h-[100px] bg-white p-3 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.06)] border border-slate-100 z-20 flex flex-col justify-center animate-float-subtle-1 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
           <div className="flex items-start gap-4">
@@ -332,7 +332,7 @@ export default function AuthLayout({ children }) {
           <div className="absolute -inset-1 bg-emerald-300/35 rounded-[1.5rem] blur-sm animate-pulse pointer-events-none"></div>
           <div className="relative w-full h-full bg-[#e0fdf4]/95 backdrop-blur-xl border-2 border-emerald-200/80 p-4 rounded-[1.25rem] shadow-[0_0_50px_rgba(16,185,129,0.3)] flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-105">
             <LogoIcon className="w-8 h-8 text-[#059669] mb-1.5 animate-pulse" strokeWidth={2.5} />
-            <span className="text-[11px] font-bold text-[#065f46] text-center leading-tight">AI<br/>Analysis</span>
+            <span className="text-[11px] font-bold text-[#065f46] text-center leading-tight">AI<br />Analysis</span>
           </div>
         </div>
 

@@ -3,14 +3,55 @@ import { useNavigate } from 'react-router-dom';
 import { User, Settings, LogOut, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+// Module-level user cache and in-flight promise to prevent repeated network fetches
+let inFlightUserPromise = null;
+let cachedUserData = null;
+
+async function getAuthUser() {
+  if (cachedUserData) return cachedUserData;
+
+  // 1. Check local session first (zero network requests)
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      cachedUserData = session.user;
+      return cachedUserData;
+    }
+  } catch {
+    // fallback
+  }
+
+  // 2. Deduplicate in-flight network requests
+  if (inFlightUserPromise) return inFlightUserPromise;
+
+  inFlightUserPromise = (async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      cachedUserData = user || null;
+      return cachedUserData;
+    } catch {
+      return null;
+    } finally {
+      inFlightUserPromise = null;
+    }
+  })();
+
+  return inFlightUserPromise;
+}
+
 export default function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
-  const [isDarkMode, setIsDarkMode] = useState(document.body.classList.contains('dark-theme'));
-  
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return (
+      localStorage.getItem('scitrace_theme') === 'dark' ||
+      document.body.classList.contains('dark-theme')
+    );
+  });
+
   // Password Change State
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -18,13 +59,13 @@ export default function ProfileMenu() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
-  
+
   // Initialize from cache to prevent UI flash
   const cachedProfile = JSON.parse(localStorage.getItem('cachedProfile') || 'null');
 
   // Profile state
   const [profile, setProfile] = useState({
-    name: cachedProfile?.name || ' ', // Space prevents 'R' from flashing if we don't have a name yet
+    name: cachedProfile?.name || ' ',
     email: cachedProfile?.email || 'Loading...',
     phone: cachedProfile?.phone || '',
     role: cachedProfile?.role || 'Researcher',
@@ -33,9 +74,10 @@ export default function ProfileMenu() {
   });
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+    let isMounted = true;
+
+    getAuthUser().then(user => {
+      if (user && isMounted) {
         setProfile(prev => {
           const newProfile = {
             ...prev,
@@ -46,8 +88,41 @@ export default function ProfileMenu() {
           return newProfile;
         });
       }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        cachedUserData = null;
+        localStorage.removeItem('cachedProfile');
+        if (isMounted) {
+          setProfile({
+            name: ' ',
+            email: 'User',
+            phone: '',
+            role: 'Researcher',
+            institution: '',
+            avatarUrl: null
+          });
+        }
+      } else if (session?.user && isMounted) {
+        cachedUserData = session.user;
+        const newProfile = {
+          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+          email: session.user.email || '',
+          phone: '',
+          role: 'Researcher',
+          institution: '',
+          avatarUrl: null
+        };
+        localStorage.setItem('cachedProfile', JSON.stringify(newProfile));
+        setProfile(prev => ({ ...prev, ...newProfile }));
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
     };
-    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -117,7 +192,7 @@ export default function ProfileMenu() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      
+
       // Hide form after 2 seconds
       setTimeout(() => {
         setShowPasswordForm(false);
@@ -131,14 +206,14 @@ export default function ProfileMenu() {
 
   return (
     <div className="relative" ref={menuRef}>
-      <button 
-        onClick={() => setIsOpen(!isOpen)} 
+      <button
+        onClick={() => setIsOpen(!isOpen)}
         className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600 hover:bg-slate-300 transition-colors ml-2 shadow-sm border border-slate-300 overflow-hidden"
       >
         {profile.avatarUrl ? (
-            <img src={profile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+          <img src={profile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
         ) : (
-            profile.name.charAt(0)
+          profile.name.charAt(0)
         )}
       </button>
 
@@ -149,7 +224,7 @@ export default function ProfileMenu() {
             <p className="text-xs text-slate-500 truncate">{profile.email}</p>
           </div>
           <div className="py-1">
-            <button 
+            <button
               onClick={() => {
                 setShowEditModal(true);
                 setIsOpen(false);
@@ -158,7 +233,7 @@ export default function ProfileMenu() {
             >
               <User className="w-4 h-4 text-slate-400" /> Edit Profile
             </button>
-            <button 
+            <button
               onClick={() => {
                 setShowSettingsPanel(true);
                 setIsOpen(false);
@@ -169,7 +244,7 @@ export default function ProfileMenu() {
             </button>
           </div>
           <div className="py-1 border-t border-slate-100">
-            <button 
+            <button
               onClick={handleLogout}
               className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
             >
@@ -190,22 +265,22 @@ export default function ProfileMenu() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto">
               <form id="profile-form" onSubmit={handleSaveProfile} className="p-6 space-y-5">
                 <div className="flex justify-center mb-8">
                   <div className="relative group cursor-pointer">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
                       id="avatar-upload"
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
                           const reader = new FileReader();
                           reader.onloadend = () => {
-                            const updated = {...profile, avatarUrl: reader.result};
+                            const updated = { ...profile, avatarUrl: reader.result };
                             setProfile(updated);
                             localStorage.setItem('cachedProfile', JSON.stringify(updated));
                           };
@@ -230,21 +305,21 @@ export default function ProfileMenu() {
 
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Full Name <span className="text-emerald-500">*</span></label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={profile.name}
-                    onChange={(e) => setProfile({...profile, name: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-[15px] font-medium text-slate-800 bg-slate-50/50 focus:bg-white"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Email Address <span className="text-emerald-500">*</span></label>
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     value={profile.email}
-                    onChange={(e) => setProfile({...profile, email: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-[15px] font-medium text-slate-800 bg-slate-50/50 focus:bg-white"
                     required
                   />
@@ -252,12 +327,12 @@ export default function ProfileMenu() {
 
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Phone Number</label>
-                  <input 
-                    type="tel" 
+                  <input
+                    type="tel"
                     value={profile.phone}
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, ''); // only allow numbers
-                      if (val.length <= 10) setProfile({...profile, phone: val});
+                      if (val.length <= 10) setProfile({ ...profile, phone: val });
                     }}
                     pattern="[0-9]{10}"
                     title="Phone number must be exactly 10 digits"
@@ -268,28 +343,28 @@ export default function ProfileMenu() {
 
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Role/Title</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={profile.role}
-                    onChange={(e) => setProfile({...profile, role: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, role: e.target.value })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-[15px] font-medium text-slate-800 bg-slate-50/50 focus:bg-white"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Institution/Organization</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={profile.institution}
-                    onChange={(e) => setProfile({...profile, institution: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, institution: e.target.value })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-[15px] font-medium text-slate-800 bg-slate-50/50 focus:bg-white"
                   />
                 </div>
               </form>
             </div>
-            
+
             <div className="p-6 border-t border-slate-100 bg-white mt-auto">
-              <button 
+              <button
                 type="submit"
                 form="profile-form"
                 className="w-full py-3 text-[15px] font-bold text-white bg-[#0f2a24] rounded-xl hover:bg-slate-900 transition-colors shadow-md"
@@ -312,9 +387,9 @@ export default function ProfileMenu() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
-              
+
               <div>
                 <h4 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider mb-4">Appearance</h4>
                 <div className="space-y-3">
@@ -328,7 +403,7 @@ export default function ProfileMenu() {
               <div>
                 <h4 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider mb-4">Privacy & Data</h4>
                 <div className="space-y-3">
-                  
+
                   {!showPasswordForm ? (
                     <button onClick={() => setShowPasswordForm(true)} className="w-full text-left p-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-[14px] font-medium text-slate-700">
                       Change Password
@@ -336,32 +411,32 @@ export default function ProfileMenu() {
                   ) : (
                     <form onSubmit={handleChangePassword} className="p-4 border border-slate-200 rounded-xl bg-slate-50/50 space-y-3">
                       <h5 className="text-[14px] font-bold text-slate-800 mb-2">Change Password</h5>
-                      
+
                       {passwordError && <div className="text-[13px] text-red-600 bg-red-50 p-2 rounded-lg font-medium">{passwordError}</div>}
                       {passwordSuccess && <div className="text-[13px] text-emerald-600 bg-emerald-50 p-2 rounded-lg font-medium">{passwordSuccess}</div>}
-                      
-                      <input 
-                        type="password" 
-                        placeholder="Current Password" 
+
+                      <input
+                        type="password"
+                        placeholder="Current Password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-[14px] font-medium text-slate-800 bg-white"
                       />
-                      <input 
-                        type="password" 
-                        placeholder="New Password" 
+                      <input
+                        type="password"
+                        placeholder="New Password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-[14px] font-medium text-slate-800 bg-white"
                       />
-                      <input 
-                        type="password" 
-                        placeholder="Confirm New Password" 
+                      <input
+                        type="password"
+                        placeholder="Confirm New Password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-[14px] font-medium text-slate-800 bg-white"
                       />
-                      
+
                       <div className="flex gap-2 pt-2">
                         <button type="button" onClick={() => setShowPasswordForm(false)} className="flex-1 py-2 text-[13px] font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                           Cancel
@@ -379,7 +454,7 @@ export default function ProfileMenu() {
                 </div>
               </div>
             </div>
-            
+
           </div>
         </div>
       )}

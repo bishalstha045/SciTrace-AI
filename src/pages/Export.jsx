@@ -4,7 +4,9 @@ import { ChevronRight, ChevronLeft, Download, FileText, CheckCircle2, AlertTrian
 import { mockAnalysisService } from '../services/mockAnalysisService';
 import { analysisApi } from '../services/api';
 import { getAnalysisStats } from '../utils/analysisStats';
-import ProfileMenu from '../components/ProfileMenu';
+import Navbar from '../components/Navbar';
+
+const GENERATION_DATE = new Date().toLocaleDateString();
 
 const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -29,22 +31,69 @@ export default function Export() {
   useEffect(() => {
     const fetchAnalysis = async () => {
       try {
-        const id = analysisId || 'demo-analysis';
-        const res = await analysisApi.getAnalysisById(id);
-        if (res.success && res.data) {
-          setAnalysis(res.data);
-        } else {
-          const fallback = await mockAnalysisService.getAnalysisById(id);
+        const isDemo = !analysisId || analysisId === 'demo-analysis' || analysisId === 'demo' || analysisId === 'demo_analysis';
+        if (isDemo) {
+          const fallback = await mockAnalysisService.getAnalysisById('demo-analysis');
           setAnalysis(fallback);
+          return;
+        }
+
+        const res = await analysisApi.getAnalysisResults(analysisId);
+        if (res.success && res.data) {
+          const raw = res.data;
+          const analysisObj = raw.analysis || raw;
+          const merged = {
+            ...analysisObj,
+            createdAt: analysisObj.created_at || analysisObj.createdAt,
+            updatedAt: analysisObj.updated_at || analysisObj.updatedAt,
+            papers: (raw.papers || analysisObj.papers || []).map(p => ({
+              ...p,
+              title: p.title || p.filename || p.name || 'Untitled Document',
+              name: p.filename || p.name || 'Untitled Document',
+              pageCount: p.page_count || p.pageCount || 1,
+              pages: p.page_count || p.pages || 1,
+              year: p.year || new Date().getFullYear(),
+              authors: p.authors || [],
+            })),
+            claims: (raw.claims || analysisObj.claims || []).map(c => ({
+              ...c,
+              text: c.claim_text || c.text || '',
+              claim_text: c.claim_text || c.text || '',
+              page: c.page_number || c.page || 1,
+              page_number: c.page_number || c.page || 1,
+              paperId: c.paper_id || c.paperId || '',
+              paper_id: c.paper_id || c.paperId || '',
+              section: c.section_name || c.section || '',
+            })),
+            relationships: (raw.relationships || analysisObj.relationships || []).map(r => ({
+              ...r,
+              type: r.classification || r.type || 'related',
+              sourceClaimId: r.source_claim_id || r.sourceClaimId,
+              targetClaimId: r.target_claim_id || r.targetClaimId,
+              sourcePaperId: r.source_paper_id || r.sourcePaperId,
+              targetPaperId: r.target_paper_id || r.targetPaperId,
+              evidence: r.evidence || {
+                source: {
+                  page: r.source_page_number || 1,
+                  text: r.source_claim_text || '',
+                  highlight: r.source_claim_text || '',
+                },
+                target: {
+                  page: r.target_page_number || 1,
+                  text: r.target_claim_text || '',
+                  highlight: r.target_claim_text || '',
+                },
+              },
+              confidence: r.confidence || r.confidence_score || 50,
+            })),
+          };
+          setAnalysis(merged);
+        } else {
+          setAnalysis(null);
         }
       } catch (err) {
         console.error("Export fetch error:", err);
-        try {
-          const fallback = await mockAnalysisService.getAnalysisById(analysisId || 'demo-analysis');
-          setAnalysis(fallback);
-        } catch {
-          setAnalysis(null);
-        }
+        setAnalysis(null);
       } finally {
         setLoading(false);
       }
@@ -192,62 +241,48 @@ export default function Export() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col overflow-x-hidden">
-      {/* Navbar */}
-      <nav className="sticky top-0 w-full h-[80px] flex items-center justify-between px-6 lg:px-[60px] z-50 border-b border-slate-200/50 bg-white">
-        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <LogoIcon className="w-7 h-7 text-emerald-500" strokeWidth={2} />
-            <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+      {/* Responsive Navbar */}
+      <Navbar 
+        activeTab="workspace" 
+        actions={
+          <Link to={`/analysis/${analysis.id}/results`} className="bg-white border border-slate-200 text-slate-700 px-3.5 py-1.5 rounded-lg font-medium text-[13px] hover:bg-slate-50 flex items-center gap-1.5 transition-colors shadow-xs">
+            <ChevronLeft className="w-4 h-4"/> Back to Results
           </Link>
+        }
+      />
 
-          <div className="flex items-center gap-10">
-            <div className="relative h-full flex items-center">
-              <Link to="/analyses" className="text-slate-900 font-semibold text-[14px] cursor-pointer">Workspace</Link>
-              <div className="absolute bottom-0 left-0 w-full h-[2px] bg-slate-900 rounded-t-full"></div>
-            </div>
-            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Analyses</Link>
-            <Link to="/papers" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
+      {/* Main Content Area */}
+      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[60px] py-6 sm:py-10 flex flex-col flex-1">
+        
+        {/* Header Row */}
+        <div className="mb-6 sm:mb-8">
+          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <Link to="/analyses" className="hover:text-emerald-500 transition-colors">Workspace</Link> 
+              <ChevronRight className="w-3 h-3 text-slate-400"/> 
+              <Link to={`/analysis/${analysis.id}/results`} className="hover:text-emerald-500 transition-colors">Analysis Results</Link> 
+              <ChevronRight className="w-3 h-3 text-slate-400"/> 
+              <span className="text-slate-700 font-semibold">Export</span>
           </div>
-
-          <div className="flex items-center gap-6">
-            <Link to={`/analysis/${analysis.id}/results`} className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-50 flex items-center gap-2">
-              <ChevronLeft className="w-4 h-4"/> Back to Results
-            </Link>
-            <ProfileMenu />
-          </div>
-        </nav>
-
-        {/* Main Content Area */}
-        <main className="w-full max-w-[1440px] mx-auto px-6 lg:px-[60px] py-10 flex flex-col flex-1">
           
-          {/* Header Row */}
-          <div className="mb-8">
-            <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2 flex-wrap">
-                <Link to="/analyses" className="hover:text-emerald-500 transition-colors">Workspace</Link> 
-                <ChevronRight className="w-3 h-3"/> 
-                <Link to={`/analysis/${analysis.id}/results`} className="hover:text-emerald-500 transition-colors">Analysis Results</Link> 
-                <ChevronRight className="w-3 h-3"/> 
-                <span className="text-slate-700 font-semibold">Export</span>
-            </div>
-            
-            {/* Demonstration Notice */}
-            {(analysis.id === 'demo-analysis' || analysis.isDemo || analysis.isSimulation) && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 flex items-center justify-between text-[12px] text-amber-800 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span><strong>Demonstration Mode:</strong> Export data generated is based on simulated analysis findings.</span>
-                </div>
-                <Link to={`/analysis/${analysis.id}/results`} className="font-bold text-amber-900 hover:underline">
-                  Back to Results &rarr;
-                </Link>
+          {/* Demonstration Notice */}
+          {(analysis.id === 'demo-analysis' || analysis.isDemo || analysis.isSimulation) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[12px] text-amber-800 shadow-xs">
+              <div className="flex items-center gap-2">
+                <Info className="w-4 h-4 text-amber-600 shrink-0" />
+                <span><strong>Demonstration Mode:</strong> Export data generated is based on simulated analysis findings.</span>
               </div>
-            )}
+              <Link to={`/analysis/${analysis.id}/results`} className="font-bold text-amber-900 hover:underline shrink-0">
+                Back to Results &rarr;
+              </Link>
+            </div>
+          )}
 
-            <h1 className="text-[40px] font-serif text-[#0f2a24] leading-none mb-3 tracking-tight">
-              Export Analysis
-            </h1>
-            <p className="text-[15px] text-slate-500 mb-2">
-              Create a structured report from your SciTrace AI analysis.
-            </p>
+          <h1 className="text-2xl sm:text-3xl md:text-[40px] font-serif text-[#0f2a24] leading-tight mb-2 sm:mb-3 tracking-tight">
+            Export Analysis
+          </h1>
+          <p className="text-[14px] sm:text-[15px] text-slate-500 mb-2">
+            Create a structured report from your SciTrace AI analysis.
+          </p>
             <div className="flex items-center gap-3 text-[13px] text-slate-500 font-medium mt-3">
               <div className="flex items-center gap-1.5"><FileText className="w-4 h-4"/> {pCount} papers</div>
               <span>&bull;</span>
@@ -405,7 +440,7 @@ export default function Export() {
                   </div>
                   <div className="text-right">
                     <h2 className="font-bold text-[14px] text-slate-800">Research Analysis Report</h2>
-                    <p className="text-[10px] text-slate-500">Generated on {new Date().toLocaleDateString()}</p>
+                    <p className="text-[10px] text-slate-500">Generated on {GENERATION_DATE}</p>
                   </div>
                 </div>
 

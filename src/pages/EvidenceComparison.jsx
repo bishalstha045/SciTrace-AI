@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, FileText, AlertTriangle, CheckCircle2, Copy, ExternalLink, Box, ArrowRight, ArrowLeft, Info } from 'lucide-react';
 import { mockAnalysisService } from '../services/mockAnalysisService';
 import { analysisApi } from '../services/api';
-import ProfileMenu from '../components/ProfileMenu';
+import Navbar from '../components/Navbar';
 
 const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -32,22 +32,60 @@ export default function EvidenceComparison() {
       setLoading(true);
       setError(null);
       try {
-        const id = analysisId || 'demo-analysis';
-        const res = await analysisApi.getAnalysisById(id);
+        const isDemo = !analysisId || analysisId === 'demo-analysis' || analysisId === 'demo' || analysisId === 'demo_analysis';
+        if (isDemo) {
+          const data = await mockAnalysisService.getAnalysisById('demo-analysis');
+          setAnalysis(data);
+          return;
+        }
+
+        const res = await analysisApi.getAnalysisResults(analysisId);
         if (res.success && res.data) {
-          setAnalysis(res.data);
+          const raw = res.data;
+          const analysisObj = raw.analysis || raw;
+          const merged = {
+            ...analysisObj,
+            createdAt: analysisObj.created_at || analysisObj.createdAt,
+            papers: (raw.papers || analysisObj.papers || []).map(p => ({
+              ...p,
+              title: p.title || p.filename || p.name || 'Untitled Document',
+              name: p.filename || p.name || 'Untitled Document',
+            })),
+            claims: (raw.claims || analysisObj.claims || []).map(c => ({
+              ...c,
+              text: c.claim_text || c.text || '',
+              claim_text: c.claim_text || c.text || '',
+              page: c.page_number || c.page || 1,
+              paperId: c.paper_id || c.paperId || '',
+            })),
+            relationships: (raw.relationships || analysisObj.relationships || []).map(r => ({
+              ...r,
+              type: r.classification || r.type || 'related',
+              sourceClaimId: r.source_claim_id || r.sourceClaimId,
+              targetClaimId: r.target_claim_id || r.targetClaimId,
+              evidence: r.evidence || {
+                source: {
+                  page: r.source_page_number || 1,
+                  text: r.source_claim_text || '',
+                  highlight: r.source_claim_text || '',
+                },
+                target: {
+                  page: r.target_page_number || 1,
+                  text: r.target_claim_text || '',
+                  highlight: r.target_claim_text || '',
+                },
+              },
+              contextDifferences: r.contextDifferences || r.context_differences || [],
+              confidence: r.confidence || r.confidence_score || 50,
+            })),
+          };
+          setAnalysis(merged);
         } else {
-          const fallback = await mockAnalysisService.getAnalysisById(id);
-          setAnalysis(fallback);
+          setError(res.error || "Analysis not found or could not be loaded.");
         }
       } catch (err) {
         console.error("Evidence analysis fetch error:", err);
-        try {
-          const fallback = await mockAnalysisService.getAnalysisById(analysisId || 'demo-analysis');
-          setAnalysis(fallback);
-        } catch {
-          setError(err.message || "Analysis not found");
-        }
+        setError(err.message || "Failed to load evidence comparison.");
       } finally {
         setLoading(false);
       }
@@ -159,59 +197,45 @@ export default function EvidenceComparison() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col overflow-x-hidden">
-      {/* Navbar */}
-      <nav className="sticky top-0 w-full h-[80px] flex items-center justify-between px-6 lg:px-[60px] z-50 border-b border-slate-200/50 bg-white">
-        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <LogoIcon className="w-7 h-7 text-emerald-500" strokeWidth={2} />
-            <span className="font-serif font-bold text-[#0f2a24] text-[22px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
+      {/* Responsive Navbar */}
+      <Navbar 
+        activeTab="workspace" 
+        actions={
+          <Link to={`/analysis/${activeAnalysisId}/results`} className="bg-white border border-slate-200 text-slate-700 px-3.5 py-1.5 rounded-lg font-medium text-[13px] hover:bg-slate-50 flex items-center gap-1.5 transition-colors shadow-xs">
+            <ChevronLeft className="w-4 h-4"/> Back to Results
           </Link>
+        }
+      />
 
-          <div className="flex items-center gap-10">
-            <div className="relative h-full flex items-center">
-              <Link to="/analyses" className="text-slate-900 font-semibold text-[14px] cursor-pointer pt-7 pb-7">Workspace</Link>
-              <div className="absolute bottom-0 left-0 w-full h-[2px] bg-slate-900 rounded-t-full"></div>
+      {/* Main Content Area */}
+      <main className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[60px] py-6 sm:py-10 flex flex-col flex-1">
+        
+        {/* Demonstration Notice */}
+        {(analysis.id === 'demo-analysis' || analysis.isDemo || analysis.isSimulation) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[12px] text-amber-800 shadow-xs">
+            <div className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-amber-600 shrink-0" />
+              <span><strong>Demonstration Mode:</strong> Claims and source excerpts shown below are from the demonstration corpus.</span>
             </div>
-            <Link to="/analyses" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Analyses</Link>
-            <Link to="/papers" className="text-slate-500 font-medium text-[14px] hover:text-slate-900 cursor-pointer transition-colors">Papers</Link>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <Link to={`/analysis/${activeAnalysisId}/results`} className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium text-[14px] hover:bg-slate-50 flex items-center gap-2 transition-colors">
-              <ChevronLeft className="w-4 h-4"/> Back to Results
+            <Link to={`/analysis/${activeAnalysisId}/results`} className="font-bold text-amber-900 hover:underline shrink-0">
+              View All Results &rarr;
             </Link>
-            <ProfileMenu />
           </div>
-        </nav>
+        )}
 
-        {/* Main Content Area */}
-        <main className="w-full max-w-[1440px] mx-auto px-6 lg:px-[60px] py-10 flex flex-col flex-1">
-          
-          {/* Demonstration Notice */}
-          {(analysis.id === 'demo-analysis' || analysis.isDemo || analysis.isSimulation) && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 flex items-center justify-between text-[12px] text-amber-800">
-              <div className="flex items-center gap-2">
-                <Info className="w-4 h-4 text-amber-600 shrink-0" />
-                <span><strong>Demonstration Mode:</strong> Claims and source excerpts shown below are from the demonstration corpus.</span>
-              </div>
-              <Link to={`/analysis/${activeAnalysisId}/results`} className="font-bold text-amber-900 hover:underline">
-                View All Results &rarr;
-              </Link>
+        <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+          <div>
+            <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+               <Link to="/analyses" className="hover:text-emerald-500 transition-colors">Workspace</Link> 
+               <ChevronRight className="w-3 h-3 text-slate-400"/> 
+               <Link to={`/analysis/${activeAnalysisId}/results`} className="hover:text-emerald-500 transition-colors">Analysis Results</Link> 
+               <ChevronRight className="w-3 h-3 text-slate-400"/> 
+               <span className="text-slate-700 font-semibold">Evidence Comparison ({currentIndex + 1} of {relationships.length})</span>
             </div>
-          )}
-
-          <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
-            <div>
-              <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2 flex-wrap">
-                 <Link to="/analyses" className="hover:text-emerald-500 transition-colors">Workspace</Link> 
-                 <ChevronRight className="w-3 h-3"/> 
-                 <Link to={`/analysis/${activeAnalysisId}/results`} className="hover:text-emerald-500 transition-colors">Analysis Results</Link> 
-                 <ChevronRight className="w-3 h-3"/> 
-                 <span className="text-slate-700 font-semibold">Evidence Comparison ({currentIndex + 1} of {relationships.length})</span>
-              </div>
-              <h1 className="text-[32px] font-serif text-[#0f2a24] leading-none tracking-tight">
-                Evidence Comparison
-              </h1>
-            </div>
+            <h1 className="text-2xl sm:text-3xl md:text-[32px] font-serif text-[#0f2a24] leading-tight tracking-tight">
+              Evidence Comparison
+            </h1>
+          </div>
             
             <div className="flex items-center gap-3">
                <button 
@@ -416,7 +440,7 @@ export default function EvidenceComparison() {
                    </div>
                    <div className="flex justify-between items-center text-[12px]">
                      <span className="text-slate-500">Timestamp</span>
-                     <span className="text-slate-800 font-medium">{new Date(rel.created_at || analysis.updatedAt || Date.now()).toLocaleDateString()}</span>
+                     <span className="text-slate-800 font-medium">{(rel.created_at || analysis.updatedAt) ? new Date(rel.created_at || analysis.updatedAt).toLocaleDateString() : 'Recent'}</span>
                    </div>
                  </div>
               </div>

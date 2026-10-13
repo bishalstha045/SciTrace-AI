@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 const LogoIcon = ({ className, strokeWidth = 1.5 }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="12" cy="12" r="1.5" />
@@ -71,7 +73,7 @@ export default function Footer() {
       </div>
       
       <div className="max-w-[1400px] mx-auto mt-10 pt-6 border-t border-slate-800 text-[13px] text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p>&copy; {new Date().getFullYear()} SciTrace AI by Bishal Shrestha. All rights reserved.</p>
+        <p>&copy; {CURRENT_YEAR} SciTrace AI by Bishal Shrestha. All rights reserved.</p>
         <div className="flex gap-6">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

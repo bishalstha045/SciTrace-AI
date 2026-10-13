@@ -2,8 +2,8 @@ import { mockAnalysisService } from './mockAnalysisService.js';
 import { demoAnalysis } from '../data/demoData.js';
 import { supabase } from '../lib/supabase.js';
 
-// API configuration for FastAPI backend
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || 'http://localhost:8000/api';
+// API configuration for FastAPI backend (routed via Vite proxy or custom URL)
+const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || '/api';
 const USE_MOCK = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_USE_MOCK === 'true');
 
 /**
@@ -104,7 +104,8 @@ export const analysisApi = {
         return formatResponse(data);
       }
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/analyses/${analysisId}/results`, { headers });
+      // First try /analyses/:id for status (lightweight, used in polling)
+      const res = await fetch(`${API_BASE_URL}/analyses/${analysisId}`, { headers });
       if (!res.ok) {
         if (res.status === 404) {
           const err = new Error('Analysis not found');
@@ -114,12 +115,11 @@ export const analysisApi = {
         throw new Error(`HTTP error ${res.status}`);
       }
       const raw = await res.json();
-      const analysisData = raw.analysis || raw;
       const formatted = {
-        ...analysisData,
-        createdAt: analysisData.created_at || analysisData.createdAt,
-        updatedAt: analysisData.updated_at || analysisData.updatedAt,
-        papers: (raw.papers || analysisData.papers || []).map(p => ({
+        ...raw,
+        createdAt: raw.created_at || raw.createdAt,
+        updatedAt: raw.updated_at || raw.updatedAt,
+        papers: (raw.papers || []).map(p => ({
           ...p,
           title: p.title || p.filename || p.name || 'Untitled Document',
           name: p.filename || p.name || 'Untitled Document',
@@ -128,23 +128,8 @@ export const analysisApi = {
           year: p.year || 2024,
           authors: p.authors || [],
         })),
-        claims: (raw.claims || []).map(c => ({
-          ...c,
-          text: c.claim_text || c.text || '',
-          claim_text: c.claim_text || c.text || '',
-          page: c.page_number || c.page || 1,
-          page_number: c.page_number || c.page || 1,
-          paperId: c.paper_id || c.paperId || '',
-          paper_id: c.paper_id || c.paperId || '',
-          section: c.section_name || c.section || '',
-          section_name: c.section_name || c.section || '',
-        })),
-        relationships: (raw.relationships || []).map(r => ({
-          ...r,
-          type: r.classification || r.type || 'related',
-          sourceClaimId: r.source_claim_id || r.sourceClaimId,
-          targetClaimId: r.target_claim_id || r.targetClaimId,
-        })),
+        claims: [],
+        relationships: [],
       };
       return formatResponse(formatted);
 

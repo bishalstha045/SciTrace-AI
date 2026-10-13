@@ -1,53 +1,18 @@
-import { Link } from 'react-router-dom';
 import { UploadCloud, Cpu, Share2, Search, FileText } from 'lucide-react';
 import Footer from '../components/Footer';
-import ProfileMenu from '../components/ProfileMenu';
+import Navbar from '../components/Navbar';
 
 export default function HowItWorks() {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col">
-      {/* Navbar Minimal -> Premium */}
-      <nav className="w-full h-[100px] flex items-center justify-between px-6 lg:px-[60px] bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <Link to="/" className="flex items-center gap-2.5">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-emerald-500">
-            <circle cx="12" cy="12" r="1.5" />
-            <circle cx="5" cy="5" r="1.5" />
-            <circle cx="19" cy="5" r="1.5" />
-            <circle cx="5" cy="19" r="1.5" />
-            <circle cx="19" cy="19" r="1.5" />
-            <line x1="10.5" y1="10.5" x2="6.5" y2="6.5" />
-            <line x1="13.5" y1="10.5" x2="17.5" y2="6.5" />
-            <line x1="10.5" y1="13.5" x2="6.5" y2="17.5" />
-            <line x1="13.5" y1="13.5" x2="17.5" y2="17.5" />
-          </svg>
-          <span className="font-serif font-bold text-[#0f2a24] text-[26px] tracking-tight">SciTrace <span className="text-emerald-500 font-sans">AI</span></span>
-        </Link>
-
-        <div className="hidden md:flex items-center gap-12 ml-12">
-            <Link to="/" className="text-slate-500 font-semibold text-[15px] hover:text-slate-900 cursor-pointer transition-colors">Home</Link>
-            <div className="relative">
-              <Link to="/how-it-works" className="text-slate-900 font-bold text-[15px] cursor-pointer">How It Works</Link>
-              <div className="absolute -bottom-[8px] left-0 w-full h-[2px] bg-slate-900 rounded-full"></div>
-            </div>
-            <Link to="/about" className="text-slate-500 font-semibold text-[15px] hover:text-slate-900 cursor-pointer transition-colors">About</Link>
-        </div>
-
-        <div className="flex items-center gap-4 lg:gap-6">
-            <Link to="/analysis/demo-analysis/results" className="hidden lg:block bg-slate-100/80 border border-slate-200/80 text-slate-800 px-6 py-2.5 rounded-lg font-bold text-[14px] hover:bg-slate-200 transition-colors shadow-sm">
-                View Demo
-            </Link>
-            <Link to={localStorage.getItem('isAuthenticated') === 'true' ? "/analysis/new" : "/signin"} className="bg-[#0f172a] text-white px-6 py-2.5 rounded-lg font-bold text-[14px] hover:bg-slate-900 transition-all shadow-md flex items-center gap-2">
-                Start Analysis &rarr;
-            </Link>
-            {localStorage.getItem('isAuthenticated') === 'true' && <ProfileMenu />}
-        </div>
-      </nav>
+      {/* Responsive Navbar */}
+      <Navbar mode="marketing" activeTab="how-it-works" />
 
       <main className="flex-1">
         {/* Header Section */}
-        <section className="bg-white py-20 px-6 border-b border-slate-200">
+        <section className="bg-white py-12 sm:py-20 px-4 sm:px-6 border-b border-slate-200">
           <div className="max-w-[900px] mx-auto text-center">
-            <h1 className="text-[48px] font-serif font-bold text-[#0f2a24] mb-6 leading-tight">How SciTrace AI Works</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-[48px] font-serif font-bold text-[#0f2a24] mb-4 sm:mb-6 leading-tight">How SciTrace AI Works</h1>
             <p className="text-xl text-slate-500 leading-relaxed max-w-[700px] mx-auto">
               A detailed look into our four-step process for turning raw PDF documents into a structured, interconnected map of scientific evidence.
             </p>

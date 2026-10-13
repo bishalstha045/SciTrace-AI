@@ -4,20 +4,17 @@ import { supabase } from '../lib/supabase';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const [errorMsg, setErrorMsg] = useState('');
-
-  useEffect(() => {
-    // Check for errors in the hash or query string immediately
+  const [errorMsg, setErrorMsg] = useState(() => {
+    if (typeof window === 'undefined') return '';
     const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
     const queryParams = new URLSearchParams(window.location.search);
-    
     const error = hashParams.get('error_description') || hashParams.get('error') || 
                   queryParams.get('error_description') || queryParams.get('error');
-                  
-    if (error) {
-      setErrorMsg(decodeURIComponent(error).replace(/\+/g, ' '));
-      return;
-    }
+    return error ? decodeURIComponent(error).replace(/\+/g, ' ') : '';
+  });
+
+  useEffect(() => {
+    if (errorMsg) return;
 
     supabase.auth.getSession().then(({ data: { session }, error: sessionError }) => {
       if (sessionError) {
@@ -49,7 +46,7 @@ export default function AuthCallback() {
         };
       }
     });
-  }, [navigate]);
+  }, [navigate, errorMsg]);
 
   if (errorMsg) {
     return (
