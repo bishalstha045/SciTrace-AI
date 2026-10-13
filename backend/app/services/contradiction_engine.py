@@ -1,6 +1,6 @@
 import logging
 import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from app.core.config import settings
 from app.services.claim_extractor import claim_extractor

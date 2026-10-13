@@ -21,15 +21,23 @@ backend/
 │   ├── models/
 │   │   └── schemas.py          # Pydantic request and response models
 │   ├── services/
-│   │   ├── ai_pipeline_interface.py # Service interfaces for upcoming AI models
-│   │   ├── pdf_service.py      # PyMuPDF text extractor and PDF validator
-│   │   └── supabase_service.py # Supabase database & storage client with demo isolation
-│   └── main.py                 # FastAPI application, middleware, CORS
+│   │   ├── pdf_service.py          # PyMuPDF text extractor and PDF validator
+│   │   ├── claim_extractor.py      # Scientific claim extraction & abbreviation preservation
+│   │   ├── similarity_service.py   # Sentence-Transformers embeddings & cosine filtering
+│   │   ├── nli_service.py          # BART-large-MNLI bidirectional inference & label mapping
+│   │   ├── contradiction_engine.py # 6-stage scientific contradiction analysis orchestration
+│   │   └── supabase_service.py     # Supabase database & storage client with resilient cache
+│   └── main.py                     # FastAPI application, middleware, CORS
 ├── tests/
-│   ├── conftest.py             # Pytest fixtures, test users, and mock PDFs
-│   ├── test_analyses_api.py    # API tests for CRUD, uploads, and permissions
-│   ├── test_health.py          # Health check tests
-│   └── test_pdf_service.py     # PyMuPDF extraction, magic bytes, and scanned PDF tests
+│   ├── conftest.py                 # Pytest fixtures, test users, and test PDFs
+│   ├── test_analyses_api.py        # API tests for CRUD, uploads, and permissions
+│   ├── test_health.py              # Health check tests
+│   ├── test_pdf_service.py         # PyMuPDF extraction, magic bytes, and scanned PDF tests
+│   ├── test_claim_extraction.py    # Claim extraction, qualifiers, and abbreviation tests
+│   ├── test_similarity_service.py  # Embedding generation and pair filtering tests
+│   ├── test_nli_service.py         # Dynamic label indices and inference classification tests
+│   ├── test_contradiction_engine.py# End-to-end 6-stage pipeline & idempotency tests
+│   └── test_evaluation_benchmark.py# Scientific benchmark evaluation tests
 ├── .env.example                # Environment variables template
 ├── requirements.txt            # Python dependencies
 ├── run.py                      # Development server runner

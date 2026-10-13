@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 from app.core.config import settings

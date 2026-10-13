@@ -1,7 +1,7 @@
 import threading
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 import torch
 from app.core.config import settings

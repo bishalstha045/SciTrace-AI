@@ -1,7 +1,4 @@
 import io
-import pytest
-from app.services.contradiction_engine import contradiction_engine
-from app.services.supabase_service import supabase_service
 
 
 def test_full_pipeline_with_two_papers(client, user1_auth_header, create_sample_pdf):

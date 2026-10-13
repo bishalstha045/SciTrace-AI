@@ -1,7 +1,4 @@
-import io
-import pytest
-import pymupdf as fitz
-from app.services.claim_extractor import ScientificClaimExtractor, claim_extractor
+from app.services.claim_extractor import ScientificClaimExtractor
 
 
 def test_sentence_segmentation_protects_abbreviations():

@@ -73,7 +73,7 @@ async def upload_paper(
     uploads to private storage, and saves paper metadata.
     """
     # 1. Enforce ownership check on analysis
-    analysis = supabase_service.get_analysis(analysis_id=analysis_id, user_id=current_user.id)
+    _analysis = supabase_service.get_analysis(analysis_id=analysis_id, user_id=current_user.id)
 
     # 2. Read file content into memory
     content = await file.read()

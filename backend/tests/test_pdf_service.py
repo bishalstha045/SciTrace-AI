@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import pytest
 from app.services.pdf_service import pdf_service, PDFValidationError
 

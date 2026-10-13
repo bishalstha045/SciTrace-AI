@@ -1,11 +1,10 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, List
-import pytest
+from typing import Any, List
+
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_recall_fscore_support
 
 from app.services.nli_service import nli_service
-from app.services.similarity_service import similarity_service
 
 benchmark_json_path = Path(__file__).resolve().parent.parent / "data" / "evaluation_benchmark.json"
 

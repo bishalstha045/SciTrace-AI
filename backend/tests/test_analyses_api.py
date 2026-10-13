@@ -221,7 +221,7 @@ def test_end_to_end_analysis_pipeline_and_csv(client, user1_auth_header, user2_a
         files={"file": ("fasting_study.pdf", io.BytesIO(p1_pdf), "application/pdf")},
     )
     assert up1.status_code == 201
-    paper1_id = up1.json()["id"]
+    assert "id" in up1.json()
 
     # Paper 2: Claims fasting has no effect or decreases neurogenesis
     p2_text = [
@@ -235,7 +235,7 @@ def test_end_to_end_analysis_pipeline_and_csv(client, user1_auth_header, user2_a
         files={"file": ("fasting_trial.pdf", io.BytesIO(p2_pdf), "application/pdf")},
     )
     assert up2.status_code == 201
-    paper2_id = up2.json()["id"]
+    assert "id" in up2.json()
 
     # 3. Run analysis pipeline synchronously
     run_res = client.post(

@@ -32,7 +32,7 @@ def get_supabase_client():
         return None
 
     try:
-        from supabase import create_client, Client
+        from supabase import create_client
         _supabase_client = create_client(settings.SUPABASE_URL, api_key)
         return _supabase_client
     except Exception as e:
@@ -290,6 +290,7 @@ class SupabaseService:
             "processing_status": processing_status,
             "authors": authors or [],
             "year": year or now.year,
+            "is_scanned": is_scanned,  # Include in DB payload
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
         }
@@ -299,13 +300,14 @@ class SupabaseService:
             try:
                 res = client.table("papers").insert(payload).execute()
                 if res.data and len(res.data) > 0 and isinstance(res.data[0], dict):
-                    return {**dict(res.data[0]), "is_scanned": is_scanned}
+                    result = dict(res.data[0])
+                    result.setdefault("is_scanned", is_scanned)
+                    return result
             except Exception as e:
                 print(f"Supabase paper insert failed, storing in memory: {e}")
 
         _in_memory_papers[paper_id] = {
             **payload,
-            "is_scanned": is_scanned,
             "created_at": now,
             "updated_at": now,
         }
@@ -445,6 +447,7 @@ class SupabaseService:
                     try:
                         base_record = {
                             "id": str(claim_id),
+                            # pyrefly: ignore [unnecessary-type-conversion]
                             "paper_id": str(paper_id),
                             "claim_text": str(claim_text),
                             "page_number": int(page_val) if page_val is not None else 1,
@@ -562,7 +565,18 @@ class SupabaseService:
 
             if client:
                 try:
-                    full_insert = {
+                    # Validate UUID fields before inserting to avoid DB type errors
+                    def _safe_uuid(val: Any) -> Optional[str]:
+                        if not val:
+                            return None
+                        try:
+                            import uuid as _uuid
+                            _uuid.UUID(str(val))
+                            return str(val)
+                        except (ValueError, AttributeError):
+                            return None
+
+                    full_insert: Dict[str, Any] = {
                         "id": rel_id,
                         "analysis_id": analysis_id_str,
                         "source_claim_id": source_claim_id,
@@ -574,9 +588,22 @@ class SupabaseService:
                         "similarity_score": rel.get("similarity_score"),
                         "nli_scores": rel.get("nli_scores"),
                         "model_metadata": rel.get("model_metadata"),
+                        "source_claim_text": rel.get("source_claim_text"),
+                        "target_claim_text": rel.get("target_claim_text"),
+                        "source_page_number": rel.get("source_page_number"),
+                        "target_page_number": rel.get("target_page_number"),
                     }
+                    # Only add UUID paper refs if they are valid UUIDs
+                    src_pid = _safe_uuid(rel.get("source_paper_id"))
+                    tgt_pid = _safe_uuid(rel.get("target_paper_id"))
+                    if src_pid:
+                        full_insert["source_paper_id"] = src_pid
+                    if tgt_pid:
+                        full_insert["target_paper_id"] = tgt_pid
+
                     client.table("relationships").insert(full_insert).execute()
-                except Exception:
+                except Exception as err1:
+                    print(f"Supabase relationship insert notice: {err1}")
                     try:
                         base_insert = {
                             "id": rel_id,
@@ -590,7 +617,7 @@ class SupabaseService:
                         }
                         client.table("relationships").insert(base_insert).execute()
                     except Exception as err2:
-                        print(f"Supabase relationship insert notice: {err2}")
+                        print(f"Supabase relationship base insert notice: {err2}")
 
             _in_memory_relationships[rel_id] = record
             saved_records.append(record)

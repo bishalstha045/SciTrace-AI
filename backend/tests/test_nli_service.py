@@ -1,5 +1,4 @@
-import pytest
-from app.services.nli_service import NLIClassificationService, nli_service
+from app.services.nli_service import nli_service
 
 
 def test_nli_dynamic_label_indices():

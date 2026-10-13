@@ -1,5 +1,4 @@
-import pytest
-from app.services.similarity_service import SemanticSimilarityService, similarity_service
+from app.services.similarity_service import similarity_service
 
 
 def test_similarity_single_pair():

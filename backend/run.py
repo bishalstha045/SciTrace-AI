@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+# pyrefly: ignore [missing-import]
 import uvicorn
 
 # Ensure backend directory is in sys.path

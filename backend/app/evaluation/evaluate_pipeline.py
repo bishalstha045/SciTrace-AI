@@ -1,5 +1,4 @@
 import json
-import os
 import sys
 import time
 from pathlib import Path
@@ -117,7 +116,7 @@ def run_evaluation(
     # Compute Metrics using scikit-learn
     acc = float(accuracy_score(y_true, y_pred))
     micro_res = precision_recall_fscore_support(y_true, y_pred, average="micro", zero_division="warn")
-    p_micro, r_micro, f1_micro = float(micro_res[0]), float(micro_res[1]), float(micro_res[2])
+    _p_micro, _r_micro, f1_micro = float(micro_res[0]), float(micro_res[1]), float(micro_res[2])
     macro_res = precision_recall_fscore_support(y_true, y_pred, average="macro", zero_division="warn")
     p_macro, r_macro, f1_macro = float(macro_res[0]), float(macro_res[1]), float(macro_res[2])
 
@@ -128,7 +127,7 @@ def run_evaluation(
     support_per_class = [int(v) for v in cls_res[3]] if cls_res[3] is not None else [0] * len(labels_order)
 
     conf_mat = confusion_matrix(y_true, y_pred, labels=labels_order).tolist()
-    report_dict = classification_report(y_true, y_pred, labels=labels_order, output_dict=True, zero_division="warn")
+    _report_dict = classification_report(y_true, y_pred, labels=labels_order, output_dict=True, zero_division="warn")
 
     per_class_metrics = {}
     for i, label in enumerate(labels_order):

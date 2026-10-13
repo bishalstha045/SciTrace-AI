@@ -1,7 +1,10 @@
 import os
 from typing import List, Optional
+# pyrefly: ignore [missing-import]
 import pytest
+# pyrefly: ignore [missing-import]
 import pymupdf as fitz
+# pyrefly: ignore [missing-import]
 from fastapi.testclient import TestClient
 
 # Ensure test environment before importing app
@@ -13,6 +16,8 @@ settings.ENVIRONMENT = "test"
 settings.ALLOW_TEST_AUTH = True
 
 from app.main import app
+
+
 
 
 @pytest.fixture

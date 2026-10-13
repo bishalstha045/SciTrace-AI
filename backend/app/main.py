@@ -19,9 +19,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register API Routers
-# Expose /health at root level
+# Expose /health at root level and under /api
 app.include_router(health.router)
+app.include_router(health.router, prefix=settings.API_PREFIX)
 
 # Expose standard /api prefixed routes
 app.include_router(analyses.router, prefix=settings.API_PREFIX)
