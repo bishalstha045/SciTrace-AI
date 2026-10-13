@@ -16,10 +16,10 @@ from app.models.schemas import (
     RelationshipResponse,
     UserContext,
 )
-from app.services.claim_extractor import claim_extractor
-from app.services.contradiction_engine import contradiction_engine
-from app.services.pdf_service import PDFValidationError, pdf_service
-from app.services.supabase_service import supabase_service
+from app.ai.claim_extractor import claim_extractor
+from app.ai.contradiction_engine import contradiction_engine
+from app.ai.pdf_service import PDFValidationError, pdf_service
+from app.db.supabase_service import supabase_service
 
 router = APIRouter(prefix="/analyses", tags=["Analyses"])
 
