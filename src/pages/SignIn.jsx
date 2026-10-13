@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import AuthLayout from '../components/AuthLayout';
@@ -10,6 +10,17 @@ export default function SignIn() {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleGuestSignIn = () => {
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('cachedProfile', JSON.stringify({
+      name: 'Demo Researcher',
+      email: 'researcher@scitrace.ai',
+      role: 'Scientific Investigator',
+      institution: 'SciTrace AI Research Lab'
+    }));
+    navigate('/analyses');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,6 +133,14 @@ export default function SignIn() {
       </div>
 
       <div className="mt-6 space-y-3">
+        <button
+          type="button"
+          onClick={handleGuestSignIn}
+          className="w-full bg-emerald-50 border border-emerald-200 rounded-xl py-3 flex items-center justify-center gap-2.5 hover:bg-emerald-100 transition-colors text-[14px] font-bold text-emerald-800 shadow-xs cursor-pointer"
+        >
+          <Sparkles className="w-4 h-4 text-emerald-600" />
+          Continue with Demo / Guest Mode
+        </button>
         <button
           type="button"
           disabled={loading}

@@ -1,5 +1,7 @@
 # SciTrace AI — Scientific Contradiction Detection & Evidence Analysis
 
+🌐 **Live Application:** [https://sci-trace-ai.vercel.app/](https://sci-trace-ai.vercel.app/)
+
 SciTrace AI is an enterprise-grade AI system designed to detect empirical contradictions, corroborations, and rhetorical discrepancies across scientific research literature. Users can upload two or more peer-reviewed scientific papers (in PDF format) and run a 6-stage NLP pipeline that extracts verifiable claims, computes cross-document semantic similarity, classifies premise-hypothesis pairs using Natural Language Inference (NLI), and visualizes interactive evidence graphs and downloadable CSV reports.
 
 ---

@@ -57,19 +57,10 @@ export default function Navbar({ activeTab, mode = "workspace", actions = null }
                     : 'text-slate-500 hover:text-slate-900'
                   }`}
               >
-                Workspace
+                Analyses
                 {(currentTab === 'workspace' || currentTab === 'analyses') && (
                   <span className="absolute bottom-0 left-0 w-full h-[2px] bg-slate-900 rounded-t-full" />
                 )}
-              </Link>
-              <Link
-                to="/analyses"
-                className={`relative h-full flex items-center text-[14px] font-medium transition-colors ${currentTab === 'analyses'
-                    ? 'text-slate-900 font-semibold'
-                    : 'text-slate-500 hover:text-slate-900'
-                  }`}
-              >
-                Analyses
               </Link>
               <Link
                 to="/papers"
